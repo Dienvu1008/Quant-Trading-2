@@ -1,0 +1,13 @@
+feature,TP_HIT_mean,SL_HIT_mean,sl_vs_tp
+exitPrice,4103.8043,5360.4566,1256.6523
+exitAtrProxy,1150.5842,2210.5569,1059.9727
+exitSpreadPoints,96.6976,328.7842,232.0866
+exitVpDevPOCDir,0.1126,0.3699,0.2573
+exitVpInsideVA,0.2657,0.4976,0.2319
+exitVpMigrationConf,0.7637,0.7774,0.0137
+exitAuctFailure,0.1834,0.1822,-0.0012
+exitAuctBalance,0.6684,0.6662,-0.0022
+exitAuctContinuation,0.2365,0.2275,-0.009
+exitAuctReversalRisk,0.1495,0.1401,-0.0094
+exitAuctExhaustion,0.2969,0.2501,-0.0468
+exitAuctRegime,0.3378,0.1697,-0.1681

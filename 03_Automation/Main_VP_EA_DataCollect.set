@@ -1,0 +1,26 @@
+; VP EA Parameters — Data Collection Mode
+; All triggers enabled, EdgeGuards disabled (collect unbiased data)
+; Funnel logging ON, fixed small lot for uniform sizing
+
+InpSymbols=
+InpRiskPercent=0.0
+InpFixedLot=0.01
+InpMaxPositionsPerSymbol=2
+InpTrailingStyle=1
+InpProfilerWarmup=100
+InpNewsBlockBefore=30
+InpNewsBlockAfter=15
+InpMagicNumber=202607
+InpLogVerbosity=0
+InpEnableBreakout=true
+InpEnableBreakoutRetest=true
+InpEnablePullback=true
+InpEnableTrendCont=true
+InpEnableSweepReversal=true
+InpEnableMeanReversion=true
+InpEnableNakedPOC=true
+InpEnableAnchoredPullback=true
+InpLogFunnel=true
+InpUseEdgeGuards=false
+InpUseSizingCalibration=false
+InpMaxLot=0.01
