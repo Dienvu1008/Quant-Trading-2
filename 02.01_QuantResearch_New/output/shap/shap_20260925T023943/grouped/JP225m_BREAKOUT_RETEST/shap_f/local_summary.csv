@@ -1,0 +1,5 @@
+feature,win_top3_freq,lose_top3_freq,total_top3_freq,win_bias
+liqEqualHL,20,20,40,0.49999999998750005
+entryVpDistLVN,20,20,40,0.49999999998750005
+auctLVNStrength,11,15,26,0.42307692306065087
+session,9,5,14,0.6428571428112245

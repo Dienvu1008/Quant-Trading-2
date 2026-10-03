@@ -18,9 +18,30 @@ from data_collect import sync_data
 from data_loader import (
     load_funnel, load_trades,
     list_available_months, check_data_range, _months_in_range,
+    TRAIL_STYLES, PRODUCTION_STYLE_DEFAULT,
 )
 
 _MONTH_RE = re.compile(r"^\d{2}\.\d{4}$")
+
+
+def _prompt_production_style():
+    """Ask which trailing style the EA runs Live. Guard-bound metrics (EV,
+    thresholds, lot sizing) are computed on this style so they match production;
+    all 3 styles are still used for robustness. Blank = default (expansion)."""
+    print(f"\nProduction trailing style — the style the EA runs Live.")
+    print(f"  -1 = no trailing | 0 = conservative | 1 = expansion")
+    raw = input(f"  Production style [-1/0/1, blank = {PRODUCTION_STYLE_DEFAULT}]: ").strip()
+    if raw == "":
+        return PRODUCTION_STYLE_DEFAULT
+    try:
+        val = int(raw)
+    except ValueError:
+        print(f"  [WARN] Invalid. Using default {PRODUCTION_STYLE_DEFAULT}.")
+        return PRODUCTION_STYLE_DEFAULT
+    if val not in TRAIL_STYLES:
+        print(f"  [WARN] {val} not in {TRAIL_STYLES}. Using default {PRODUCTION_STYLE_DEFAULT}.")
+        return PRODUCTION_STYLE_DEFAULT
+    return val
 
 
 def _prompt_range():
@@ -85,6 +106,11 @@ def main():
     else:
         print("\nAnalyzing ALL available data.")
 
+    # 3b. Which trailing style does the EA run Live? (drives guard-bound metrics)
+    production_style = _prompt_production_style()
+    print(f"  Production style = {production_style} "
+          f"(guard metrics computed on this style; all 3 used for robustness)")
+
     # 4. Load the selected range
     funnel_df = load_funnel(start=start, end=end)
     trade_df = load_trades(start=start, end=end)
@@ -94,11 +120,13 @@ def main():
         return
 
     all_results = {}
+    all_results["production_style"] = production_style
 
     # ═══ Phase 01: Behavior Profiling (FIRST — establishes context) ═══
     try:
         from vp_01_behavior_profiling import run as run_phase01
-        all_results["phase1"] = run_phase01(funnel_df, trade_df)
+        all_results["phase1"] = run_phase01(funnel_df, trade_df,
+                                            production_style=production_style)
     except Exception as e:
         print(f"[ERR] Phase 01: {e}")
         all_results["phase1"] = {}
@@ -106,7 +134,8 @@ def main():
     # ═══ Phase 02: Edge Discovery (uses Phase 01 to filter symbols) ═══
     try:
         from vp_02_edge_discovery import run as run_phase02
-        all_results["phase2"] = run_phase02(funnel_df, trade_df)
+        all_results["phase2"] = run_phase02(funnel_df, trade_df,
+                                            production_style=production_style)
     except Exception as e:
         print(f"[ERR] Phase 02: {e}")
         all_results["phase2"] = {}
@@ -114,7 +143,8 @@ def main():
     # ═══ Phase 03: Entry Quality (uses Phase 02 features) ═══
     try:
         from vp_03_entry_quality import run as run_phase03
-        all_results["phase3"] = run_phase03(funnel_df, trade_df, all_results)
+        all_results["phase3"] = run_phase03(funnel_df, trade_df, all_results,
+                                            production_style=production_style)
     except Exception as e:
         print(f"[ERR] Phase 03: {e}")
         all_results["phase3"] = {}
@@ -122,7 +152,8 @@ def main():
     # ═══ Phase 04: Exit Profiling (uses Phase 02 features) ═══
     try:
         from vp_04_exit_profiling import run as run_phase04
-        all_results["phase4"] = run_phase04(funnel_df, trade_df, all_results)
+        all_results["phase4"] = run_phase04(funnel_df, trade_df, all_results,
+                                            production_style=production_style)
     except Exception as e:
         print(f"[ERR] Phase 04: {e}")
         all_results["phase4"] = {}
@@ -130,7 +161,8 @@ def main():
     # ═══ Phase 05: Regime Analysis (last — filters by prior phase results) ═══
     try:
         from vp_05_regime_analysis import run as run_phase05
-        all_results["phase5"] = run_phase05(funnel_df, trade_df, all_results)
+        all_results["phase5"] = run_phase05(funnel_df, trade_df, all_results,
+                                            production_style=production_style)
     except Exception as e:
         print(f"[ERR] Phase 05: {e}")
         all_results["phase5"] = {}
@@ -138,7 +170,8 @@ def main():
     # ═══ Phase 06: Sizing Calibration (uses all prior trade results) ═══
     try:
         from vp_06_sizing_calibration import run as run_phase06
-        all_results["phase6"] = run_phase06(funnel_df, trade_df, all_results)
+        all_results["phase6"] = run_phase06(funnel_df, trade_df, all_results,
+                                            production_style=production_style)
     except Exception as e:
         print(f"[ERR] Phase 06: {e}")
         all_results["phase6"] = {}
@@ -146,7 +179,7 @@ def main():
     # ═══ Phase 99: Generate EdgeGuard Config ═══
     try:
         from vp_99_generate_guards import run as run_phase99
-        all_results["phase99"] = run_phase99()
+        all_results["phase99"] = run_phase99(production_style=production_style)
     except Exception as e:
         print(f"[ERR] Phase 99: {e}")
 

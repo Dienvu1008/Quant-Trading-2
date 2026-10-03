@@ -1,0 +1,6 @@
+feature,win_top3_freq,lose_top3_freq,total_top3_freq,win_bias
+vpPriceVsPOC,20,20,40,0.49999999998750005
+liqPremDisc,17,20,37,0.4594594594470417
+auctTargetConf,13,13,26,0.4999999999807692
+ofAbsorption,7,4,11,0.6363636363057851
+vpLTMajorLVNStrength,3,3,6,0.49999999991666666

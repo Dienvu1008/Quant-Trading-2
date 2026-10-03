@@ -65,12 +65,36 @@ struct STrailingContext
 
 #define TRAIL_EMA_ALPHA          0.15
 #define TRAIL_EMA_ALPHA_EXP      0.08
-#define TRAIL_MIN_MOVEMENT       0.05
-#define TRAIL_MIN_MOVEMENT_EXP   0.25
+// ── Min-movement raised (was 0.05 / 0.25) so the stop only advances when
+//    price has moved a meaningful fraction of ATR. This stops the trail from
+//    creeping tick-by-tick on live ticks (where Evaluate runs every tick),
+//    which previously made the stop hug price far tighter than in the
+//    1-minute-OHLC tester. ──
+#define TRAIL_MIN_MOVEMENT       0.15
+#define TRAIL_MIN_MOVEMENT_EXP   0.35
 #define TRAIL_REGIME_PERSIST     3
 #define TRAIL_REGIME_PERSIST_EXP 6
 #define TRAIL_ATR_BUFFER         0.10
 #define TRAIL_ATR_BUFFER_EXP     0.25
+
+// ── Tick-noise brakes (Step 2 & 3) ──
+// Time throttle: normal structural trailing may advance the stop at most once
+// per this many seconds. Configurable via SetMinUpdateSeconds() (EA input,
+// default 60 = one M1 candle) to mirror the OHLC tester the strategy was
+// validated on. Emergency / failed-auction / reversal-event tightening bypass
+// this throttle and still fire on every tick.
+#define TRAIL_MIN_UPDATE_SECONDS_DEFAULT 60
+// Max advance per single update, in ATR. Caps how far a normal trail step can
+// jump so a burst of ticks cannot ratchet the stop up all at once.
+#define TRAIL_MAX_STEP_ATR       0.50
+#define TRAIL_MAX_STEP_ATR_EXP   0.80
+
+// ── Break-even threshold (Step 4) ──
+// Profit (in ATR) required before the stop is pulled up to entry. Raised for
+// conservative (was 0.5) so a small favourable move no longer arms break-even
+// and get swept for a tiny loss before a real profit buffer exists.
+#define TRAIL_BE_THRESH          0.80
+#define TRAIL_BE_THRESH_EXP      1.00
 
 class CAuctionTrailingStopEngine
   {
@@ -86,12 +110,17 @@ private:
    bool              m_profitExpansionMode;
    SStructureHistory m_structHistory;
    int               m_updateCounter;
+   datetime          m_lastStopUpdateTime;   // last time a NORMAL trail advanced the stop
+   int               m_minUpdateSecs;        // time throttle for normal trailing (EA input)
 
    bool   IsExpansion(void)      const { return m_trailingStyle == TRAIL_STYLE_EXPANSION; }
    double GetEmaAlpha(void)      const { return IsExpansion() ? TRAIL_EMA_ALPHA_EXP : TRAIL_EMA_ALPHA; }
    double GetMinMovement(void)   const { return IsExpansion() ? TRAIL_MIN_MOVEMENT_EXP : TRAIL_MIN_MOVEMENT; }
    double GetAtrBuffer(void)     const { return IsExpansion() ? TRAIL_ATR_BUFFER_EXP : TRAIL_ATR_BUFFER; }
    int    GetRegimePersist(void) const { return IsExpansion() ? TRAIL_REGIME_PERSIST_EXP : TRAIL_REGIME_PERSIST; }
+   int    GetMinUpdateSecs(void) const { return m_minUpdateSecs; }
+   double GetMaxStepAtr(void)    const { return IsExpansion() ? TRAIL_MAX_STEP_ATR_EXP : TRAIL_MAX_STEP_ATR; }
+   double GetBeThresh(void)      const { return IsExpansion() ? TRAIL_BE_THRESH_EXP : TRAIL_BE_THRESH; }
 
    void UpdateSmoothedSignals(const SVPPipelineState &state)
      {
@@ -424,10 +453,26 @@ private:
           if(!ctx.isBuy && m_lastIssuedStop>0 && rawStop>m_lastIssuedStop) rawStop=m_lastIssuedStop; }
       double moveDist = MathAbs(rawStop - ctx.currentSL);
       if(moveDist < atr*minMove && m_smooth.failureScore<0.75) return ctx.currentSL;
+
+      // ── Step 3: cap how far the stop can ADVANCE in a single update. A burst
+      //    of live ticks can't ratchet the stop up all at once; it advances at
+      //    most GetMaxStepAtr()*ATR from the current SL per step. Only caps
+      //    forward moves — widening / emergency tightening are unaffected here.
+      if(!allowWiden && ctx.currentSL > 0)
+        {
+         double maxStep = atr * GetMaxStepAtr();
+         if(ctx.isBuy && rawStop > ctx.currentSL + maxStep)  rawStop = ctx.currentSL + maxStep;
+         if(!ctx.isBuy && rawStop < ctx.currentSL - maxStep) rawStop = ctx.currentSL - maxStep;
+        }
+
       double buf=GetAtrBuffer();
       if(ctx.isBuy && rawStop > ctx.bid-atr*buf) rawStop=ctx.bid-atr*buf;
       if(!ctx.isBuy && rawStop < ctx.bid+atr*buf) rawStop=ctx.bid+atr*buf;
-      double beThresh = IsExpansion() ? 1.0 : 0.5;
+
+      // ── Step 4: break-even only once a real profit buffer exists (raised
+      //    threshold via GetBeThresh) so a tiny favourable move no longer pins
+      //    the stop to entry and gets swept for a small loss.
+      double beThresh = GetBeThresh();
       if(ctx.floatingProfit > atr*beThresh)
         { if(ctx.isBuy && rawStop<ctx.entryPrice) rawStop=ctx.entryPrice;
           if(!ctx.isBuy && rawStop>ctx.entryPrice) rawStop=ctx.entryPrice; }
@@ -633,6 +678,11 @@ public:
    void SetTrailingStyle(ETrailingStyle style) { m_trailingStyle = style; }
    ETrailingStyle GetTrailingStyle(void) const { return m_trailingStyle; }
 
+   // Time throttle for normal structural trailing (seconds). <=0 disables the
+   // throttle (advance allowed every tick, pre-brake behaviour).
+   void SetMinUpdateSeconds(int secs) { m_minUpdateSecs = (secs > 0) ? secs : 0; }
+   int  GetMinUpdateSeconds(void) const { return m_minUpdateSecs; }
+
    void Reset(void)
      {
       m_trailingStyle = TRAIL_STYLE_CONSERVATIVE;
@@ -642,6 +692,8 @@ public:
       m_pendingCount=0; m_lastIssuedStop=0;
       m_trendPersistence=0; m_exhaustionPersistence=0;
       m_profitExpansionMode=false; m_updateCounter=0;
+      m_lastStopUpdateTime=0;
+      m_minUpdateSecs=TRAIL_MIN_UPDATE_SECONDS_DEFAULT;
       m_structHistory.writeIdx=0; m_structHistory.count=0;
       ArrayInitialize(m_structHistory.poc,0);
       ArrayInitialize(m_structHistory.hvn,0);
@@ -706,9 +758,22 @@ public:
       double rawStop = ComputeStructuralStop(ctx,state);
       double filtered = ApplyNoiseFiltering(rawStop,ctx);
 
-      if(ValidateStopPlacement(filtered,ctx))
+      // ── Step 2: time throttle for NORMAL structural trailing. On live ticks
+      //    Evaluate runs every tick; without this the stop would ratchet up on
+      //    every gnat of price movement (far tighter than the 1-min OHLC tester
+      //    where it effectively updated once per candle). We allow a normal
+      //    advance at most once per GetMinUpdateSecs(). Emergency / failed /
+      //    reversal-event tightening happen on earlier branches and are NOT
+      //    throttled, so protective exits still fire on every tick.
+      bool throttled = false;
+      if(m_lastStopUpdateTime > 0
+         && (TimeCurrent() - m_lastStopUpdateTime) < GetMinUpdateSecs())
+         throttled = true;
+
+      if(!throttled && ValidateStopPlacement(filtered,ctx))
         {
          d.shouldMoveStop=true; d.newStopPrice=filtered; m_lastIssuedStop=filtered;
+         m_lastStopUpdateTime = TimeCurrent();
          string pre = IsExpansion() ? "EXP_" : "";
          switch(regime)
            { case REGIME_TREND_CONTINUATION: d.reason=pre+"TREND_CONT"; break;

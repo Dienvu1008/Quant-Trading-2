@@ -1,0 +1,11 @@
+{
+  "ran_at": "2026-09-28T00:53:09.077259Z",
+  "n_dev_rows": 270557,
+  "n_symbols": 41,
+  "n_setups": 8,
+  "n_features_searched": 19293,
+  "n_features_kept": 8,
+  "warnings": [
+    "Group XPDUSDm/BREAKOUT_RETEST: only 9 rows, skipped (need >= 45)"
+  ]
+}

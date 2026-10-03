@@ -1,0 +1,12 @@
+feature,win_top3_freq,lose_top3_freq,total_top3_freq,win_bias
+smFVG,20,20,40,0.49999999998750005
+spreadToATR,9,13,22,0.40909090907231405
+entryVpThinnessRatio,7,5,12,0.5833333332847223
+vpLTTransitionScore,8,2,10,0.79999999992
+thesis,0,10,10,0.0
+msTickImbalance,7,2,9,0.777777777691358
+auctHVNStrength,3,4,7,0.4285714285102041
+vpBestHVNScore,3,1,4,0.7499999998125
+RR,2,0,2,0.9999999995
+smMitigation,0,2,2,0.0
+atrProxy,1,1,2,0.49999999975

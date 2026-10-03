@@ -1,0 +1,9 @@
+feature,win_top3_freq,lose_top3_freq,total_top3_freq,win_bias
+msTickImbalance,19,18,37,0.5135135134996348
+entryVpThinnessRatio,15,14,29,0.5172413792925089
+auctTargetConf,9,10,19,0.47368421050138504
+vpLTMajorLVNStrength,9,8,17,0.5294117646747405
+vpLTBalanceStability,5,6,11,0.45454545450413225
+entryVpMigrationConf,1,2,3,0.3333333332222222
+vpLTNearestZoneDir,1,2,3,0.3333333332222222
+liqContext,1,0,1,0.9999999989999999

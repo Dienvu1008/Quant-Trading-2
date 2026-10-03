@@ -1,0 +1,12 @@
+feature,win_top3_freq,lose_top3_freq,total_top3_freq,win_bias
+auctDistHVN,20,20,40,0.49999999998750005
+msCompression,14,15,29,0.48275862067300834
+ofParticipation,8,7,15,0.5333333332977778
+liqContext,5,7,12,0.41666666663194446
+msSpreadScore,9,1,10,0.89999999991
+auctBalance,3,4,7,0.4285714285102041
+entryVpDistHVN,0,3,3,0.0
+vpDistNakedPOC_ATR,0,1,1,0.0
+entryVpMigrationConf,0,1,1,0.0
+ofContext,0,1,1,0.0
+liqPremDisc,1,0,1,0.9999999989999999

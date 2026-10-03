@@ -1,0 +1,16 @@
+feature,shape_detected,spearman_r,p_value,shap_range,mean_shap,n
+liqStopCluster,MONO_DOWN,-0.8229,0.0,5.4522,-0.0,74
+spreadToATR,MONO_DOWN,-0.6102,0.0,4.7032,0.0,74
+auctDistLVN,MONO_DOWN,-0.8525,0.0,5.1693,0.0,74
+spreadPoints,MONO_DOWN,-0.9449,0.0,0.1895,-0.0,74
+vpDistCompPOC,MONO_UP,0.6657,0.0,2.154,-0.0,74
+auctMajorLVN,MONO_UP,0.7034,0.0,0.9835,-0.0,74
+vpDistNakedPOC_ATR,MONO_UP,0.8016,0.0,1.3959,-0.0,74
+profilerBalMean,MONO_DOWN,-0.8158,0.0,0.7465,0.0,74
+auctTargetPrice,MONO_UP,0.5084,4e-06,1.1367,0.0,74
+liqSessionLiq,MONO_DOWN,-0.8334,0.0,0.9681,0.0,74
+vpCompVAH,MONO_UP,0.7007,0.0,1.2737,-0.0,74
+vpLTMajorLVNPrice,MONO_UP,0.7819,0.0,0.8979,0.0,74
+ofContext,MONO_DOWN,-0.5504,0.0,1.0088,-0.0,74
+vpLTMajorHVNStrength,MONO_UP,0.7458,0.0,0.8621,0.0,74
+ofFlowIntensity,MONO_UP,0.5685,0.0,0.5951,0.0,74

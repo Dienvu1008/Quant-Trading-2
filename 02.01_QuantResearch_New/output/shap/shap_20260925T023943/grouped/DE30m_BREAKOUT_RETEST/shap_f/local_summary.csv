@@ -1,0 +1,12 @@
+feature,win_top3_freq,lose_top3_freq,total_top3_freq,win_bias
+vpDevPOCSlope,14,13,27,0.5185185184993141
+ofContext,16,7,23,0.6956521738827978
+ofFlowIntensity,7,9,16,0.43749999997265626
+vpBestHVNScore,5,10,15,0.3333333333111111
+auctExhaustion,6,7,13,0.4615384615029586
+msTickImbalance,4,4,8,0.4999999999375
+liqSessionLiq,6,1,7,0.8571428570204082
+vpDailyPOC,0,7,7,0.0
+auctLVNStrength,1,1,2,0.49999999975
+auctTargetType,0,1,1,0.0
+liqEqualHL,1,0,1,0.9999999989999999

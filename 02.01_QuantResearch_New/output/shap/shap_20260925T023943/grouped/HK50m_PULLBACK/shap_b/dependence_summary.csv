@@ -1,0 +1,16 @@
+feature,shape_detected,spearman_r,p_value,shap_range,mean_shap,n
+spreadToATR,MONO_DOWN,-0.9202,0.0,3.8232,-0.0,79
+entryProfilerSamples,MONO_UP,0.7351,0.0,2.4509,-0.0,79
+vpDevPOCSlope,MONO_UP,0.8844,0.0,2.4476,0.0,79
+vpLTMajorHVNStrength,MONO_UP,0.8564,0.0,2.1634,0.0,79
+vpLTMajorLVNStrength,MONO_UP,0.8839,0.0,2.2759,-0.0,79
+msSpreadScore,MONO_UP,0.8469,0.0,2.5701,-0.0,79
+entryVpVAL,MONO_UP,0.8139,0.0,1.9337,-0.0,79
+vpLTPOC30d,MONO_DOWN,-0.8066,0.0,1.7268,-0.0,79
+vpCompVAH,MONO_UP,0.6633,0.0,1.1362,-0.0,79
+liqStopCluster,MONO_UP,0.8745,0.0,1.6469,-0.0,79
+ofAbsorption,MONO_UP,0.7117,0.0,0.9552,-0.0,79
+entryPrice,MONO_UP,0.5977,0.0,0.9619,0.0,79
+entryLTNearestZoneStrength,MONO_UP,0.7265,0.0,0.6688,-0.0,79
+entryVpDistHVN,MONO_UP,0.7196,0.0,0.5141,0.0,79
+vpLTPOCVelocity,MONO_UP,0.6734,0.0,0.5908,-0.0,79

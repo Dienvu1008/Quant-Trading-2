@@ -106,6 +106,17 @@ REGIME_NAMES = {
     6: "FAILED_AUCTION", 7: "EXCESS", 8: "CHAOTIC"
 }
 
+# ─── Trailing style (exit policy) dimension ───────────────────────
+# The EA's DataCollect mode fires 3 positions per signal, one per trailing style:
+#   -1 = no trailing (hold to fixed SL/TP)
+#    0 = conservative trailing
+#    1 = expansion trailing
+# The "production style" is the single style the EA runs Live; guard-bound numbers
+# (EV, thresholds, lot sizing) are computed on that style so they match live
+# behaviour, while all 3 styles are used to check an edge is robust to the exit.
+TRAIL_STYLES = [-1, 0, 1]
+PRODUCTION_STYLE_DEFAULT = 1  # expansion (matches EA InpTrailingStyle default)
+
 
 def get_archetype_map(all_results):
     """Extract symbol → archetype mapping from Phase 01 output.
@@ -283,6 +294,12 @@ def _parse_funnel_df(df: pd.DataFrame) -> pd.DataFrame:
     for col in FUNNEL_FEATURES:
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors="coerce")
+    # trailStyle numeric, signalId string (join key). Not model features, so they
+    # are handled here rather than in FUNNEL_FEATURES.
+    if "trailStyle" in df.columns:
+        df["trailStyle"] = pd.to_numeric(df["trailStyle"], errors="coerce")
+    if "signalId" in df.columns:
+        df["signalId"] = df["signalId"].astype(str)
 
     # Build BOS/CHOCH composites (collapse redundant raw columns)
     df = build_structure_composites(df)
@@ -305,6 +322,12 @@ def _parse_trades_df(df: pd.DataFrame) -> pd.DataFrame:
         df["win"] = (df["profitUSD"] > 0).astype(int)
     if "profitPips" in df.columns:
         df["profitPips"] = pd.to_numeric(df["profitPips"], errors="coerce")
+    # trailStyle: exit-policy dimension (-1/0/1, or 99=unknown). Keep numeric.
+    if "trailStyle" in df.columns:
+        df["trailStyle"] = pd.to_numeric(df["trailStyle"], errors="coerce")
+    # signalId: string key linking a trade to its funnel signal. Keep as string.
+    if "signalId" in df.columns:
+        df["signalId"] = df["signalId"].astype(str)
 
     numeric_cols = [c for c in df.columns if (c.startswith("entry") or c.startswith("exit"))
                     and c not in ["entryTime", "exitTime", "exitReason"]]
@@ -433,13 +456,65 @@ def load_trades(symbols=None, min_rows=1, start=None, end=None) -> pd.DataFrame:
     return df
 
 
+def _clean_join_suffix(merged):
+    """Drop the *_funnel duplicate columns kept from a merge (funnel side loses
+    when a column exists on both sides — trade values win)."""
+    for col in [c for c in merged.columns if c.endswith("_funnel")]:
+        merged.drop(columns=[col], inplace=True, errors="ignore")
+    return merged
+
+
 def merge_funnel_trades(funnel_df, trade_df, tolerance_sec=14400, min_records=5):
-    """Merge funnel features onto trades by ticket (exact join).
-    
-    Fallback to time-based merge if ticket column not available.
+    """Merge funnel (entry) features onto trades (outcomes).
+
+    Join strategy, in priority order:
+      0. signalId (+ trailStyle when present): the EA tags every position and its
+         funnel row with a shared signalId. In DataCollect one signal fires 3
+         positions (trailStyle -1/0/1), each with its own funnel row + trade row,
+         so signalId+trailStyle gives an exact 1:1 match and preserves all 3
+         exit variants of the same entry (needed to separate entry edge from exit
+         policy). This is the correct path for new data.
+      1. ticket exact join (legacy data with no signalId).
+      2. time-based merge_asof fallback (no ticket either).
     """
     if funnel_df is None or funnel_df.empty or trade_df is None or trade_df.empty:
         return None
+
+    # ── Strategy 0: signalId (+ trailStyle) join ────────────────
+    have_sig = ("signalId" in funnel_df.columns and "signalId" in trade_df.columns)
+    if have_sig:
+        f = funnel_df.copy()
+        t = trade_df.copy()
+        # Only rows with a real signal id (empty string = untracked/unknown)
+        f = f[f["signalId"].notna() & (f["signalId"].astype(str) != "")
+              & (f["signalId"].astype(str) != "nan")]
+        t = t[t["signalId"].notna() & (t["signalId"].astype(str) != "")
+              & (t["signalId"].astype(str) != "nan")]
+        if not f.empty and not t.empty:
+            keys = ["signalId"]
+            # trailStyle disambiguates the 3 exit variants that share a signalId.
+            if "trailStyle" in f.columns and "trailStyle" in t.columns:
+                keys.append("trailStyle")
+            merged = pd.merge(t, f, on=keys, how="inner", suffixes=("", "_funnel"))
+            merged = _clean_join_suffix(merged)
+            if len(merged) >= min_records:
+                # Coverage check: if signalId join recovers < 10% of total trades
+                # the data was mostly collected with a buggy/old EA build that did
+                # not write signalId correctly (VP_MAX_POSITIONS overflow etc.).
+                # Fall through to ticket join to avoid silently analysing a tiny
+                # unrepresentative slice.
+                total_trades = len(trade_df)
+                coverage = len(merged) / max(total_trades, 1)
+                if coverage >= 0.10:
+                    if "time" in merged.columns:
+                        merged = merged.sort_values("time").reset_index(drop=True)
+                    n_sig = merged["signalId"].nunique()
+                    print(f"  [MERGE] signalId join: {len(merged)} records "
+                          f"across {n_sig} signals (avg {len(merged)/max(n_sig,1):.1f} exits/signal)")
+                    return merged
+                else:
+                    print(f"  [MERGE] signalId join low coverage ({coverage:.1%} of {total_trades:,} trades) "
+                          f"— falling back to ticket join (re-collect data with fixed EA for full signalId support)")
 
     # ── Strategy 1: Exact join on ticket ────────────────────────
     if "ticket" in funnel_df.columns and "ticket" in trade_df.columns:
@@ -506,6 +581,112 @@ def merge_funnel_trades(funnel_df, trade_df, tolerance_sec=14400, min_records=5)
     if n > 0:
         print(f"  [MERGE] time-based fallback: {n} records (tolerance={tolerance_sec}s)")
     return merged if n >= min_records else None
+
+
+# ═══════════════════════════════════════════════════════════════
+# TRAILING-STYLE (EXIT POLICY) HELPERS
+# One signal now maps to up to 3 trades (trailStyle -1/0/1). These helpers let
+# each phase (a) restrict to the production style for guard-bound numbers, and
+# (b) test whether an edge is robust across all 3 exit styles.
+# ═══════════════════════════════════════════════════════════════
+
+def has_trail_styles(df) -> bool:
+    """True if the frame carries a usable trailStyle column (new 3-policy data)."""
+    if df is None or "trailStyle" not in df.columns:
+        return False
+    vals = pd.to_numeric(df["trailStyle"], errors="coerce").dropna().unique()
+    # 99 = unknown/untracked; ignore it when deciding if the dimension is present.
+    real = [v for v in vals if int(v) in TRAIL_STYLES]
+    return len(real) > 0
+
+
+def split_by_style(merged, production_style=PRODUCTION_STYLE_DEFAULT):
+    """Split a merged funnel↔trades frame into (production_df, all_styles_df).
+
+    production_df  = rows whose trailStyle == production_style (what the EA runs
+                     Live) — used for guard-bound metrics (EV, thresholds, lots).
+    all_styles_df  = every row across all styles — used for robustness checks.
+
+    Backward-compatible: if there is no trailStyle column (legacy data), both
+    returns are the input unchanged, so existing single-policy analysis is intact.
+    """
+    if merged is None or len(merged) == 0:
+        return merged, merged
+    if not has_trail_styles(merged):
+        return merged, merged
+    m = merged.copy()
+    m["trailStyle"] = pd.to_numeric(m["trailStyle"], errors="coerce")
+    prod = m[m["trailStyle"] == production_style].reset_index(drop=True)
+    return prod, m
+
+
+def robust_across_styles(merged, group_keys, value_col="profitUSD",
+                         min_per_style=5):
+    """Check whether a metric has the SAME SIGN across ALL 3 trailing styles.
+
+    For each group (defined by group_keys) computes the mean of value_col per
+    trailStyle. A group is `robust=True` iff all three styles (-1/0/1) are present
+    with at least `min_per_style` trades AND their means all share the same sign
+    (all > 0 or all < 0). This is the strict "edge independent of exit policy"
+    test: an entry edge that only shows up under one exit style is not robust.
+
+    Returns a DataFrame indexed by group_keys with columns:
+      mean_sm1/mean_s0/mean_s1, n_sm1/n_s0/n_s1, n_styles, robust, robust_sign.
+    If the data has no trailStyle dimension, returns an empty DataFrame (callers
+    should treat "no robustness info" as neutral, not as a failure).
+    """
+    if merged is None or len(merged) == 0 or not has_trail_styles(merged):
+        return pd.DataFrame()
+    if value_col not in merged.columns:
+        return pd.DataFrame()
+
+    m = merged.copy()
+    m["trailStyle"] = pd.to_numeric(m["trailStyle"], errors="coerce")
+    m = m[m["trailStyle"].isin(TRAIL_STYLES)]
+    if m.empty:
+        return pd.DataFrame()
+
+    if isinstance(group_keys, str):
+        group_keys = [group_keys]
+    # Guard against missing group columns
+    group_keys = [k for k in group_keys if k in m.columns]
+    if not group_keys:
+        return pd.DataFrame()
+
+    # Per (group, style) mean + count
+    agg = (m.groupby(group_keys + ["trailStyle"])[value_col]
+             .agg(["mean", "count"]).reset_index())
+
+    # Pivot styles into columns
+    style_suffix = {-1: "sm1", 0: "s0", 1: "s1"}
+    rows = []
+    for gvals, g in agg.groupby(group_keys):
+        if not isinstance(gvals, tuple):
+            gvals = (gvals,)
+        rec = dict(zip(group_keys, gvals))
+        means, counts = {}, {}
+        for _, r in g.iterrows():
+            st = int(r["trailStyle"])
+            means[st] = r["mean"]
+            counts[st] = int(r["count"])
+        for st in TRAIL_STYLES:
+            rec[f"mean_{style_suffix[st]}"] = means.get(st, np.nan)
+            rec[f"n_{style_suffix[st]}"] = counts.get(st, 0)
+        # A style "counts" toward robustness only with enough trades
+        valid = {st: means[st] for st in TRAIL_STYLES
+                 if st in means and counts.get(st, 0) >= min_per_style}
+        rec["n_styles"] = len(valid)
+        if len(valid) == len(TRAIL_STYLES):
+            signs = {np.sign(v) for v in valid.values() if v != 0}
+            rec["robust"] = (len(signs) == 1)
+            rec["robust_sign"] = (int(next(iter(signs))) if len(signs) == 1 else 0)
+        else:
+            rec["robust"] = False
+            rec["robust_sign"] = 0
+        rows.append(rec)
+
+    out = pd.DataFrame(rows)
+    return out.set_index(group_keys) if group_keys else out
 
 
 def list_available_months(kind: str = "VP_Trades"):

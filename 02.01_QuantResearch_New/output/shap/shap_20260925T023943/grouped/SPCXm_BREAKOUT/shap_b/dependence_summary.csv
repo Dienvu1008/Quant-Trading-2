@@ -1,0 +1,16 @@
+feature,shape_detected,spearman_r,p_value,shap_range,mean_shap,n
+auctTradeQuality,MONO_DOWN,-0.8438,0.0,243.8253,0.0,73
+ofDeltaProxy,MONO_DOWN,-0.7998,0.0,198.4076,0.0,73
+auctLVNStrength,MONO_UP,0.945,0.0,156.8785,-0.0,73
+vpPullbackPOC,MONO_UP,0.8002,0.0,125.665,0.0,73
+profilerBalMean,MONO_UP,0.6593,0.0,137.1465,0.0,73
+smContext,MONO_UP,0.8642,0.0,9.9431,0.0,73
+vpLTPOC60d,MONO_DOWN,-0.7168,0.0,90.2573,-0.0,73
+liqStopCluster,MONO_UP,0.6329,0.0,119.845,-0.0,73
+auctTargetConf,MONO_DOWN,-0.8379,0.0,71.7414,0.0,73
+liqContext,MONO_DOWN,-0.7349,0.0,69.9552,0.0,73
+SL,MONO_UP,0.6458,0.0,74.0486,0.0,73
+auctShapeConf,MONO_UP,0.7589,0.0,61.9999,0.0,73
+TP,MONO_UP,0.6508,0.0,41.1497,0.0,73
+ofParticipation,MONO_UP,0.8544,0.0,66.5805,0.0,73
+auctTargetPrice,MONO_UP,0.7576,0.0,48.8966,0.0,73

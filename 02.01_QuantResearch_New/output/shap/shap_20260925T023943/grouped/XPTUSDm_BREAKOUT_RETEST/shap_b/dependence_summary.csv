@@ -1,0 +1,16 @@
+feature,shape_detected,spearman_r,p_value,shap_range,mean_shap,n
+avgSpread,MONO_DOWN,-0.6453,0.0,1305.5739,-0.0,85
+atrProxy,MONO_DOWN,-0.7212,0.0,1370.8067,0.0,85
+entryProfilerSamples,FLAT,0.4712,5e-06,1117.231,-0.0,85
+vpLTMajorLVNStrength,MONO_UP,0.816,0.0,899.9148,-0.0,85
+msSpreadScore,MONO_UP,0.5594,0.0,663.7091,0.0,85
+profilerMigMean,MONO_DOWN,-0.868,0.0,489.6776,-0.0,85
+vpCompPOC,MONO_UP,0.5035,1e-06,494.5597,-0.0,85
+smMitigation,MONO_UP,0.6795,0.0,277.6526,0.0,85
+liqPremDisc,MONO_DOWN,-0.583,0.0,288.747,0.0,85
+ofContext,MONO_UP,0.8941,0.0,352.9615,-0.0,85
+auctTargetPrice,MONO_UP,0.7022,0.0,321.4578,0.0,85
+auctHVNStrength,BAND,0.2412,0.026179,457.8287,-0.0,85
+smZoneQuality,MONO_UP,0.8476,0.0,302.842,0.0,85
+vpNearestNakedPOC,MONO_DOWN,-0.6621,0.0,299.2351,-0.0,85
+msTickImbalance,MONO_DOWN,-0.6184,0.0,290.9929,-0.0,85

@@ -1,0 +1,15 @@
+feature,win_top3_freq,lose_top3_freq,total_top3_freq,win_bias
+spreadPoints,20,20,40,0.49999999998750005
+avgSpread,19,19,38,0.49999999998684214
+vpLTTrendDuration,6,7,13,0.4615384615029586
+entryVpProfileShape,3,3,6,0.49999999991666666
+vpLTAcceptanceAtPrice,2,4,6,0.33333333327777775
+spreadToATR,5,1,6,0.8333333331944445
+smZoneQuality,2,2,4,0.499999999875
+vpCompPOC,0,1,1,0.0
+msTickVelocity,0,1,1,0.0
+profilerTQMean,1,0,1,0.9999999989999999
+auctHVNStrength,0,1,1,0.0
+liqDensity,1,0,1,0.9999999989999999
+vpLTPOCAcceleration,1,0,1,0.9999999989999999
+auctTargetPrice,0,1,1,0.0

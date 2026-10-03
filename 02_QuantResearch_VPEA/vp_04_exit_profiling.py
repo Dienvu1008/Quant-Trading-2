@@ -33,7 +33,8 @@ except ImportError:
 warnings.filterwarnings("ignore")
 _HERE = Path(__file__).parent
 sys.path.insert(0, str(_HERE))
-from data_loader import load_funnel, load_trades, merge_funnel_trades, FUNNEL_FEATURES
+from data_loader import (load_funnel, load_trades, merge_funnel_trades, FUNNEL_FEATURES,
+                         split_by_style, has_trail_styles, TRAIL_STYLES)
 
 OUTPUT_DIR = _HERE / "output" / "04_exit_profiling"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -91,7 +92,7 @@ INTERACTION_DEFS = [
 ]
 
 
-def run(funnel_df=None, trade_df=None, all_results=None):
+def run(funnel_df=None, trade_df=None, all_results=None, production_style=1):
     t0 = time.time()
     print("\n" + "=" * 60)
     print("VP PHASE 04 — EXIT PROFILING (ROBUST v2)")
@@ -102,9 +103,29 @@ def run(funnel_df=None, trade_df=None, all_results=None):
     if trade_df is None: trade_df = load_trades()
     if funnel_df is None: funnel_df = load_funnel()
 
-    merged = merge_funnel_trades(funnel_df, trade_df, tolerance_sec=14400, min_records=15)
-    if merged is None or len(merged) < MIN_SAMPLES or "exitReason" not in merged.columns:
+    merged_all = merge_funnel_trades(funnel_df, trade_df, tolerance_sec=14400, min_records=15)
+    if merged_all is None or len(merged_all) < MIN_SAMPLES or "exitReason" not in merged_all.columns:
         print("  [SKIP] Insufficient data"); return {"sl_thresholds": [], "tp_profiles": [], "sl_profiles": []}
+
+    # exitReason (TP_HIT / SL_HIT / TRAIL_STOP) is a DIRECT function of the
+    # trailing style: style -1 (no trailing) can hit TP/SL but never TRAIL_STOP,
+    # while styles 0/1 convert many would-be TP hits into TRAIL_STOP exits.
+    # → Cross-style comparison (below) is computed on ALL styles; the guard-bound
+    #   TP/SL models + sl_thresholds are computed on the PRODUCTION style so they
+    #   match what the EA actually experiences Live.
+    multi_style = has_trail_styles(merged_all)
+    style_comparison = _style_comparison(merged_all) if multi_style else []
+
+    prod_df, _all = split_by_style(merged_all, production_style)
+    if multi_style:
+        print(f"  [STYLE] production={production_style} baseline: "
+              f"{len(prod_df)} trades (of {len(merged_all)} across all styles)")
+    merged = prod_df
+    if merged is None or len(merged) < MIN_SAMPLES:
+        print(f"  [SKIP] Insufficient production-style data "
+              f"({0 if merged is None else len(merged)} < {MIN_SAMPLES})")
+        return {"sl_thresholds": [], "tp_profiles": [], "sl_profiles": [],
+                "style_comparison": style_comparison}
 
     if len(merged) > MAX_RECORDS:
         merged = merged.sample(n=MAX_RECORDS, random_state=42)
@@ -161,11 +182,121 @@ def run(funnel_df=None, trade_df=None, all_results=None):
         with open(OUTPUT_DIR/"sl_thresholds.json", "w") as f:
             json.dump(all_thresh, f, indent=2, default=str)
 
+    # Cross-style exit comparison (which trailing style exits best per group)
+    if style_comparison:
+        pd.DataFrame(style_comparison).to_csv(OUTPUT_DIR/"style_comparison.csv", index=False)
+        with open(OUTPUT_DIR/"style_comparison.json", "w") as f:
+            json.dump(style_comparison, f, indent=2, default=str)
+
     final_tp = [p for p in all_tp if p.get("final_validated")]
     final_sl = [p for p in all_sl if p.get("final_validated")]
     print(f"\n  TP: {len(all_tp)} (final: {len(final_tp)}) | SL: {len(all_sl)} (final: {len(final_sl)}) | Thresh: {len(all_thresh)}")
+    if style_comparison:
+        _print_style_summary(style_comparison, production_style)
     print(f"  Time: {time.time()-t0:.1f}s")
-    return {"tp_profiles": all_tp, "sl_profiles": all_sl, "sl_thresholds": all_thresh}
+    return {"tp_profiles": all_tp, "sl_profiles": all_sl, "sl_thresholds": all_thresh,
+            "style_comparison": style_comparison}
+
+
+def _style_comparison(merged_all):
+    """Compare exit behaviour across trailing styles on IDENTICAL entries.
+
+    Because DataCollect fires one position per style on the same signal, this is
+    a like-for-like comparison: for each (symbol, setup, trailStyle) it reports
+    trade count, TP/SL/TRAIL exit mix, win rate, mean profit (EV), and mean
+    MFE/MAE (in ATR) when available. It answers 'which trailing style exits best
+    for this setup?' — evidence for choosing the production style, and it is
+    exit-policy aware by construction (each row is a single style).
+    """
+    if "trailStyle" not in merged_all.columns:
+        return []
+    m = merged_all.copy()
+    m["trailStyle"] = pd.to_numeric(m["trailStyle"], errors="coerce")
+    m = m[m["trailStyle"].isin(TRAIL_STYLES)]
+    if m.empty or "profitUSD" not in m.columns:
+        return []
+
+    has_sym = "symbol" in m.columns
+    has_setup = "setupType" in m.columns
+    has_reason = "exitReason" in m.columns
+    has_mfe = "mfeATR" in m.columns
+    has_mae = "maeATR" in m.columns
+
+    group_cols = []
+    if has_sym: group_cols.append("symbol")
+    if has_setup: group_cols.append("setupType")
+
+    rows = []
+    if group_cols:
+        grouped = m.groupby(group_cols)
+    else:
+        grouped = [((), m)]
+
+    for gvals, g in (grouped if group_cols else grouped):
+        if group_cols:
+            if not isinstance(gvals, tuple):
+                gvals = (gvals,)
+            base = dict(zip(group_cols, gvals))
+        else:
+            base = {}
+        for style in TRAIL_STYLES:
+            sub = g[g["trailStyle"] == style]
+            if len(sub) == 0:
+                continue
+            prof = pd.to_numeric(sub["profitUSD"], errors="coerce").dropna()
+            rec = dict(base)
+            rec["trailStyle"] = style
+            rec["n"] = int(len(sub))
+            rec["ev"] = round(float(prof.mean()), 4) if len(prof) else 0.0
+            rec["win_rate"] = round(float((prof > 0).mean()), 4) if len(prof) else 0.0
+            tot = pos = neg = 0.0
+            pos = prof[prof > 0].sum(); neg = abs(prof[prof < 0].sum())
+            rec["profit_factor"] = round(float(pos / neg), 3) if neg > 0 else 999.0
+            if has_reason:
+                n = len(sub)
+                rec["tp_rate"] = round(float((sub["exitReason"] == "TP_HIT").mean()), 4)
+                rec["sl_rate"] = round(float((sub["exitReason"] == "SL_HIT").mean()), 4)
+                rec["trail_rate"] = round(float((sub["exitReason"] == "TRAIL_STOP").mean()), 4)
+            if has_mfe:
+                rec["mfe_atr_mean"] = round(float(pd.to_numeric(sub["mfeATR"], errors="coerce").mean()), 3)
+            if has_mae:
+                rec["mae_atr_mean"] = round(float(pd.to_numeric(sub["maeATR"], errors="coerce").mean()), 3)
+            rows.append(rec)
+
+    # Mark the best style (by EV) within each group
+    if rows:
+        cmp_df = pd.DataFrame(rows)
+        key = group_cols if group_cols else None
+        if key:
+            best_idx = cmp_df.groupby(key)["ev"].idxmax()
+            cmp_df["best_ev_style"] = False
+            cmp_df.loc[best_idx, "best_ev_style"] = True
+        else:
+            cmp_df["best_ev_style"] = cmp_df["ev"] == cmp_df["ev"].max()
+        rows = cmp_df.to_dict("records")
+    return rows
+
+
+def _print_style_summary(style_comparison, production_style):
+    """Console summary: per style, aggregate EV/WR and how often it is the best
+    style in a group; flag whether the production style is the empirical winner."""
+    if not style_comparison:
+        return
+    df = pd.DataFrame(style_comparison)
+    label = {-1: "no-trail", 0: "conservative", 1: "expansion"}
+    print("  Exit style comparison (all styles, identical entries):")
+    for style in TRAIL_STYLES:
+        s = df[df["trailStyle"] == style]
+        if s.empty:
+            continue
+        wins = int(s["best_ev_style"].sum()) if "best_ev_style" in s.columns else 0
+        # Trade-weighted mean EV across groups
+        w = s["n"].sum()
+        wev = float((s["ev"] * s["n"]).sum() / w) if w else 0.0
+        wwr = float((s["win_rate"] * s["n"]).sum() / w) if w else 0.0
+        tag = "  <- production" if style == production_style else ""
+        print(f"    style {style:>2} ({label.get(style,'?'):<12}): "
+              f"EV={wev:+.3f} WR={wwr:.1%} best-in-group x{wins}{tag}")
 
 
 def _compute_interactions(df):

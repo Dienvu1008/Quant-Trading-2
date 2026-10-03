@@ -1,0 +1,14 @@
+feature,win_top3_freq,lose_top3_freq,total_top3_freq,win_bias
+spreadToATR,20,20,40,0.49999999998750005
+atrProxy,11,12,23,0.47826086954442343
+profilerMigMean,8,6,14,0.571428571387755
+auctExhaustion,4,5,9,0.4444444443950617
+auctDistLVN,4,5,9,0.4444444443950617
+entryVpDistHVN,5,1,6,0.8333333331944445
+structDistATR,1,4,5,0.19999999996
+msTickImbalance,1,3,4,0.2499999999375
+auctDistHVN,2,1,3,0.6666666664444444
+vpLTMajorHVNPrice,3,0,3,0.9999999996666666
+liqContext,1,1,2,0.49999999975
+profilerTQMean,0,1,1,0.0
+vpCompVAH,0,1,1,0.0

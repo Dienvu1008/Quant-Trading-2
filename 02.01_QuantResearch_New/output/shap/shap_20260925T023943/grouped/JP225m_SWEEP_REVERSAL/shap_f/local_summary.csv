@@ -1,0 +1,7 @@
+feature,win_top3_freq,lose_top3_freq,total_top3_freq,win_bias
+ofFlowIntensity,18,16,34,0.5294117646903115
+auctMajorHVN,14,16,30,0.4666666666511111
+liqSessionLiq,8,13,21,0.3809523809342404
+entryVpBestHVN,13,3,16,0.8124999999492187
+avgSpread,3,10,13,0.2307692307514793
+vpDailyPOC,4,2,6,0.6666666665555555

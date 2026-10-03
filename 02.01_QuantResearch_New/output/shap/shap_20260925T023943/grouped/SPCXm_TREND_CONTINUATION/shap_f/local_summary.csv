@@ -1,0 +1,9 @@
+feature,win_top3_freq,lose_top3_freq,total_top3_freq,win_bias
+auctProfileShape,18,14,32,0.562499999982422
+auctDistLVN,15,15,30,0.49999999998333333
+liqContext,11,7,18,0.6111111110771605
+auctLVNStrength,10,4,14,0.7142857142346939
+auctTargetProb,4,8,12,0.33333333330555553
+vpCompVAL,0,8,8,0.0
+vpBestHVNScore,2,2,4,0.499999999875
+auctContinuation,0,2,2,0.0

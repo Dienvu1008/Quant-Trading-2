@@ -1,0 +1,6 @@
+feature,win_top3_freq,lose_top3_freq,total_top3_freq,win_bias
+profilerTQMean,20,20,40,0.49999999998750005
+vpLTNearestZonePrice,17,20,37,0.4594594594470417
+msTickImbalance,18,15,33,0.5454545454380166
+vpDistNakedPOC_ATR,4,5,9,0.4444444443950617
+entryVpThinnessRatio,1,0,1,0.9999999989999999

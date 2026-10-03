@@ -1,0 +1,16 @@
+feature,shape_detected,spearman_r,p_value,shap_range,mean_shap,n
+vpLTNearestZonePrice,MONO_UP,0.8911,0.0,55.6297,-0.0,61
+profilerTQMean,MONO_DOWN,-0.8158,0.0,5.7182,0.0,61
+msTickImbalance,MONO_DOWN,-0.857,0.0,6.9757,0.0,61
+vpDistNakedPOC_ATR,MONO_DOWN,-0.774,0.0,18.4986,-0.0,61
+entryVpThinnessRatio,MONO_UP,0.7704,0.0,2.3475,-0.0,61
+auctTradeQuality,MONO_UP,0.8463,0.0,5.5402,-0.0,61
+ofContext,MONO_UP,0.7632,0.0,4.4932,0.0,61
+auctDistLVN,MONO_DOWN,-0.7551,0.0,8.2249,0.0,61
+smContext,MONO_UP,0.8319,0.0,3.98,0.0,61
+ofAbsorption,MONO_UP,0.8521,0.0,2.264,0.0,61
+profilerMigMean,MONO_DOWN,-0.6932,0.0,5.988,-0.0,61
+spreadToATR,MONO_DOWN,-0.8793,0.0,4.8518,-0.0,61
+vpLTPOCAcceleration,MONO_UP,0.8086,0.0,2.2547,-0.0,61
+vpLTTrendDuration,MONO_DOWN,-0.8662,0.0,0.1783,0.0,61
+vpBestHVNScore,MONO_DOWN,-0.8661,0.0,0.1783,0.0,61

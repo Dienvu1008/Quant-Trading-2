@@ -1,0 +1,15 @@
+{
+  "ran_at": "2026-09-28T00:59:56.280313Z",
+  "canary_stats": {
+    "n_signals": 270557,
+    "n_labeled": 270557,
+    "n_bad": 201719,
+    "n_good": 68838,
+    "base_bad_rate": 0.745569,
+    "mfe_threshold": 1.0
+  },
+  "n_candidates_pre_fdr": 166,
+  "n_total_hypotheses": 166,
+  "filter_spec_features": 0,
+  "warnings": []
+}

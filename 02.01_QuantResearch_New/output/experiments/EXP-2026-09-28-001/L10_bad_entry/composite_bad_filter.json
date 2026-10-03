@@ -1,0 +1,1421 @@
+{
+  "groups": {
+    "AUDUSDm|MEAN_REVERSION": {
+      "features": [
+        {
+          "feature": "msCompression",
+          "rule_type": "mid_band",
+          "threshold_low": 0.507,
+          "threshold_high": 0.9046
+        }
+      ],
+      "min_votes": 2
+    },
+    "BTCUSDm|MEAN_REVERSION": {
+      "features": [
+        {
+          "feature": "msCompression",
+          "rule_type": "mid_band",
+          "threshold_low": 0.5667,
+          "threshold_high": 0.854
+        }
+      ],
+      "min_votes": 2
+    },
+    "BTCUSDm|SWEEP_REVERSAL": {
+      "features": [
+        {
+          "feature": "msCompression",
+          "rule_type": "high_extreme",
+          "threshold_low": null,
+          "threshold_high": 1.0
+        }
+      ],
+      "min_votes": 2
+    },
+    "ETHUSDm|MEAN_REVERSION": {
+      "features": [
+        {
+          "feature": "auctAcceptance",
+          "rule_type": "high_extreme",
+          "threshold_low": null,
+          "threshold_high": 0.8142000000000003
+        },
+        {
+          "feature": "auctTargetProb",
+          "rule_type": "low_extreme",
+          "threshold_low": 0.328,
+          "threshold_high": null
+        },
+        {
+          "feature": "msCompression",
+          "rule_type": "high_extreme",
+          "threshold_low": null,
+          "threshold_high": 1.0
+        },
+        {
+          "feature": "msCompression",
+          "rule_type": "mid_band",
+          "threshold_low": 0.5342,
+          "threshold_high": 0.8966
+        }
+      ],
+      "min_votes": 2
+    },
+    "ETHUSDm|SWEEP_REVERSAL": {
+      "features": [
+        {
+          "feature": "msCompression",
+          "rule_type": "high_extreme",
+          "threshold_low": null,
+          "threshold_high": 1.0
+        },
+        {
+          "feature": "liqContext",
+          "rule_type": "high_extreme",
+          "threshold_low": null,
+          "threshold_high": 0.5483599901199341
+        }
+      ],
+      "min_votes": 2
+    },
+    "ETHUSDm|TREND_CONTINUATION": {
+      "features": [
+        {
+          "feature": "msCompression",
+          "rule_type": "mid_band",
+          "threshold_low": 0.577,
+          "threshold_high": 0.889
+        }
+      ],
+      "min_votes": 2
+    },
+    "EURAUDm|MEAN_REVERSION": {
+      "features": [
+        {
+          "feature": "msCompression",
+          "rule_type": "mid_band",
+          "threshold_low": 0.5422,
+          "threshold_high": 0.8947999999999999
+        }
+      ],
+      "min_votes": 2
+    },
+    "EURAUDm|SWEEP_REVERSAL": {
+      "features": [
+        {
+          "feature": "msCompression",
+          "rule_type": "mid_band",
+          "threshold_low": 0.5053,
+          "threshold_high": 0.8420999999999997
+        }
+      ],
+      "min_votes": 2
+    },
+    "EURCADm|SWEEP_REVERSAL": {
+      "features": [
+        {
+          "feature": "msCompression",
+          "rule_type": "high_extreme",
+          "threshold_low": null,
+          "threshold_high": 1.0
+        }
+      ],
+      "min_votes": 2
+    },
+    "EURCHFm|NAKED_POC": {
+      "features": [
+        {
+          "feature": "vpPOC",
+          "rule_type": "mid_band",
+          "threshold_low": -0.0003294045480242451,
+          "threshold_high": 0.000795499818875003
+        },
+        {
+          "feature": "vpPriceVsPOC",
+          "rule_type": "mid_band",
+          "threshold_low": -0.49093999999999993,
+          "threshold_high": 0.20559
+        }
+      ],
+      "min_votes": 2
+    },
+    "EURCHFm|SWEEP_REVERSAL": {
+      "features": [
+        {
+          "feature": "vpPOC",
+          "rule_type": "high_extreme",
+          "threshold_low": null,
+          "threshold_high": -0.00042417229594162185
+        },
+        {
+          "feature": "vpPriceVsPOC",
+          "rule_type": "low_extreme",
+          "threshold_low": 0.26299,
+          "threshold_high": null
+        }
+      ],
+      "min_votes": 2
+    },
+    "EURGBPm|MEAN_REVERSION": {
+      "features": [
+        {
+          "feature": "vpVAH",
+          "rule_type": "mid_band",
+          "threshold_low": 0.0003315898731037362,
+          "threshold_high": 0.0015920254081545119
+        },
+        {
+          "feature": "vpPriceVsPOC",
+          "rule_type": "mid_band",
+          "threshold_low": -0.68318,
+          "threshold_high": 0.2112799999999993
+        }
+      ],
+      "min_votes": 2
+    },
+    "EURGBPm|PULLBACK": {
+      "features": [
+        {
+          "feature": "vpDevPOCDir",
+          "rule_type": "mid_band",
+          "threshold_low": -0.39800000000000013,
+          "threshold_high": 0.79
+        }
+      ],
+      "min_votes": 2
+    },
+    "EURGBPm|SWEEP_REVERSAL": {
+      "features": [
+        {
+          "feature": "vpVAH",
+          "rule_type": "high_extreme",
+          "threshold_low": null,
+          "threshold_high": 0.003417879423275612
+        }
+      ],
+      "min_votes": 2
+    },
+    "EURGBPm|TREND_CONTINUATION": {
+      "features": [
+        {
+          "feature": "vpVAL",
+          "rule_type": "mid_band",
+          "threshold_low": -0.0017510565476858563,
+          "threshold_high": -0.00048494251791076005
+        },
+        {
+          "feature": "vpDevPOCDir",
+          "rule_type": "mid_band",
+          "threshold_low": -0.41084,
+          "threshold_high": 0.79
+        },
+        {
+          "feature": "vpDevPOCSlope",
+          "rule_type": "mid_band",
+          "threshold_low": -0.018220000000000004,
+          "threshold_high": 0.15148
+        }
+      ],
+      "min_votes": 2
+    },
+    "EURJPYm|BREAKOUT_RETEST": {
+      "features": [
+        {
+          "feature": "msCompression",
+          "rule_type": "mid_band",
+          "threshold_low": 0.535,
+          "threshold_high": 0.831
+        }
+      ],
+      "min_votes": 2
+    },
+    "EURJPYm|MEAN_REVERSION": {
+      "features": [
+        {
+          "feature": "msCompression",
+          "rule_type": "high_extreme",
+          "threshold_low": null,
+          "threshold_high": 1.0
+        }
+      ],
+      "min_votes": 2
+    },
+    "EURUSDm|MEAN_REVERSION": {
+      "features": [
+        {
+          "feature": "msCompression",
+          "rule_type": "high_extreme",
+          "threshold_low": null,
+          "threshold_high": 1.0
+        },
+        {
+          "feature": "msCompression",
+          "rule_type": "mid_band",
+          "threshold_low": 0.525,
+          "threshold_high": 0.9010999999999999
+        }
+      ],
+      "min_votes": 2
+    },
+    "FR40m|BREAKOUT": {
+      "features": [
+        {
+          "feature": "vpCompPOC",
+          "rule_type": "low_extreme",
+          "threshold_low": -9.419738768304397,
+          "threshold_high": null
+        },
+        {
+          "feature": "vpCompVAH",
+          "rule_type": "low_extreme",
+          "threshold_low": -4.255236718129813,
+          "threshold_high": null
+        }
+      ],
+      "min_votes": 2
+    },
+    "FR40m|MEAN_REVERSION": {
+      "features": [
+        {
+          "feature": "msCompression",
+          "rule_type": "mid_band",
+          "threshold_low": 0.5515000000000001,
+          "threshold_high": 0.979
+        },
+        {
+          "feature": "spreadToATR",
+          "rule_type": "high_extreme",
+          "threshold_low": null,
+          "threshold_high": 0.3921
+        }
+      ],
+      "min_votes": 2
+    },
+    "FR40m|SWEEP_REVERSAL": {
+      "features": [
+        {
+          "feature": "msCompression",
+          "rule_type": "high_extreme",
+          "threshold_low": null,
+          "threshold_high": 1.0
+        },
+        {
+          "feature": "spreadToATR",
+          "rule_type": "high_extreme",
+          "threshold_low": null,
+          "threshold_high": 0.48340000000000005
+        }
+      ],
+      "min_votes": 2
+    },
+    "GBPAUDm|MEAN_REVERSION": {
+      "features": [
+        {
+          "feature": "msCompression",
+          "rule_type": "mid_band",
+          "threshold_low": 0.552,
+          "threshold_high": 0.8825999999999999
+        }
+      ],
+      "min_votes": 2
+    },
+    "GBPCADm|MEAN_REVERSION": {
+      "features": [
+        {
+          "feature": "msCompression",
+          "rule_type": "mid_band",
+          "threshold_low": 0.5262,
+          "threshold_high": 0.84
+        }
+      ],
+      "min_votes": 2
+    },
+    "GBPCADm|TREND_CONTINUATION": {
+      "features": [
+        {
+          "feature": "vpCompVAL",
+          "rule_type": "low_extreme",
+          "threshold_low": -0.015493602667314147,
+          "threshold_high": null
+        }
+      ],
+      "min_votes": 2
+    },
+    "GBPCHFm|MEAN_REVERSION": {
+      "features": [
+        {
+          "feature": "vpPOC",
+          "rule_type": "high_extreme",
+          "threshold_low": null,
+          "threshold_high": 0.00017438422512670778
+        },
+        {
+          "feature": "vpVAH",
+          "rule_type": "high_extreme",
+          "threshold_low": null,
+          "threshold_high": 0.0008626756123487245
+        },
+        {
+          "feature": "vpVAL",
+          "rule_type": "high_extreme",
+          "threshold_low": null,
+          "threshold_high": -0.00048167573240599093
+        },
+        {
+          "feature": "vpPriceVsPOC",
+          "rule_type": "low_extreme",
+          "threshold_low": -0.23146,
+          "threshold_high": null
+        }
+      ],
+      "min_votes": 2
+    },
+    "GBPCHFm|SWEEP_REVERSAL": {
+      "features": [
+        {
+          "feature": "vpPOC",
+          "rule_type": "high_extreme",
+          "threshold_low": null,
+          "threshold_high": 0.0008211700448478721
+        },
+        {
+          "feature": "vpVAH",
+          "rule_type": "high_extreme",
+          "threshold_low": null,
+          "threshold_high": 0.001295431751059489
+        },
+        {
+          "feature": "vpVAL",
+          "rule_type": "high_extreme",
+          "threshold_low": null,
+          "threshold_high": -0.00014932390944044426
+        },
+        {
+          "feature": "vpPriceVsPOC",
+          "rule_type": "low_extreme",
+          "threshold_low": -0.80464,
+          "threshold_high": null
+        }
+      ],
+      "min_votes": 2
+    },
+    "GBPJPYm|BREAKOUT_RETEST": {
+      "features": [
+        {
+          "feature": "msCompression",
+          "rule_type": "mid_band",
+          "threshold_low": 0.534,
+          "threshold_high": 0.82
+        }
+      ],
+      "min_votes": 2
+    },
+    "GBPJPYm|MEAN_REVERSION": {
+      "features": [
+        {
+          "feature": "msCompression",
+          "rule_type": "mid_band",
+          "threshold_low": 0.5363,
+          "threshold_high": 0.846
+        },
+        {
+          "feature": "ofFlowIntensity",
+          "rule_type": "low_extreme",
+          "threshold_low": 0.29109999999999997,
+          "threshold_high": null
+        }
+      ],
+      "min_votes": 2
+    },
+    "GBPJPYm|TREND_CONTINUATION": {
+      "features": [
+        {
+          "feature": "msCompression",
+          "rule_type": "mid_band",
+          "threshold_low": 0.5327000000000001,
+          "threshold_high": 0.836
+        }
+      ],
+      "min_votes": 2
+    },
+    "GBPUSDm|BREAKOUT_RETEST": {
+      "features": [
+        {
+          "feature": "msCompression",
+          "rule_type": "high_extreme",
+          "threshold_low": null,
+          "threshold_high": 1.0
+        }
+      ],
+      "min_votes": 2
+    },
+    "GBPUSDm|MEAN_REVERSION": {
+      "features": [
+        {
+          "feature": "msCompression",
+          "rule_type": "mid_band",
+          "threshold_low": 0.516,
+          "threshold_high": 0.888
+        },
+        {
+          "feature": "ofFlowIntensity",
+          "rule_type": "low_extreme",
+          "threshold_low": 0.285,
+          "threshold_high": null
+        }
+      ],
+      "min_votes": 2
+    },
+    "GBPUSDm|SWEEP_REVERSAL": {
+      "features": [
+        {
+          "feature": "msCompression",
+          "rule_type": "high_extreme",
+          "threshold_low": null,
+          "threshold_high": 1.0
+        }
+      ],
+      "min_votes": 2
+    },
+    "STOXX50m|BREAKOUT_RETEST": {
+      "features": [
+        {
+          "feature": "vpPOC",
+          "rule_type": "mid_band",
+          "threshold_low": -0.6960580063374268,
+          "threshold_high": -0.0028561455681383454
+        },
+        {
+          "feature": "vpVAL",
+          "rule_type": "mid_band",
+          "threshold_low": -1.7735581344541917,
+          "threshold_high": -0.6424415654581774
+        },
+        {
+          "feature": "vpPriceVsPOC",
+          "rule_type": "mid_band",
+          "threshold_low": -0.1384,
+          "threshold_high": 0.27571999999999997
+        },
+        {
+          "feature": "vpDailyPOC",
+          "rule_type": "mid_band",
+          "threshold_low": -3.648028191008101,
+          "threshold_high": -0.7193482702591428
+        },
+        {
+          "feature": "vpCompPOC",
+          "rule_type": "mid_band",
+          "threshold_low": -5.714182725929966,
+          "threshold_high": -0.6240245473359196
+        },
+        {
+          "feature": "vpCompVAH",
+          "rule_type": "mid_band",
+          "threshold_low": -1.6942511095853046,
+          "threshold_high": 2.7276036479665984
+        },
+        {
+          "feature": "vpCompVAL",
+          "rule_type": "high_extreme",
+          "threshold_low": null,
+          "threshold_high": -1.818852508391053
+        },
+        {
+          "feature": "vpCompInsideVA",
+          "rule_type": "low_extreme",
+          "threshold_low": 0.0,
+          "threshold_high": null
+        },
+        {
+          "feature": "vpDistCompPOC",
+          "rule_type": "mid_band",
+          "threshold_low": 0.009,
+          "threshold_high": 0.036399999999999974
+        },
+        {
+          "feature": "vpMigrationConf",
+          "rule_type": "mid_band",
+          "threshold_low": 0.675,
+          "threshold_high": 1.0
+        },
+        {
+          "feature": "auctFailure",
+          "rule_type": "high_extreme",
+          "threshold_low": null,
+          "threshold_high": 0.4
+        },
+        {
+          "feature": "auctTradeQuality",
+          "rule_type": "mid_band",
+          "threshold_low": 0.368,
+          "threshold_high": 0.44339999999999996
+        },
+        {
+          "feature": "auctExpReward",
+          "rule_type": "mid_band",
+          "threshold_low": 0.4846,
+          "threshold_high": 1.1254
+        },
+        {
+          "feature": "vpLTPOCMigration",
+          "rule_type": "low_extreme",
+          "threshold_low": -2.0,
+          "threshold_high": null
+        },
+        {
+          "feature": "msCompression",
+          "rule_type": "high_extreme",
+          "threshold_low": null,
+          "threshold_high": 1.0
+        },
+        {
+          "feature": "msCompression",
+          "rule_type": "mid_band",
+          "threshold_low": 0.558,
+          "threshold_high": 0.8887999999999999
+        },
+        {
+          "feature": "msContext",
+          "rule_type": "mid_band",
+          "threshold_low": 0.3785000145435333,
+          "threshold_high": 0.5392500162124634
+        },
+        {
+          "feature": "ofFlowIntensity",
+          "rule_type": "mid_band",
+          "threshold_low": 0.3396,
+          "threshold_high": 0.4564
+        },
+        {
+          "feature": "ofContext",
+          "rule_type": "low_extreme",
+          "threshold_low": 0.2747333347797394,
+          "threshold_high": null
+        },
+        {
+          "feature": "smZoneQuality",
+          "rule_type": "mid_band",
+          "threshold_low": 0.882,
+          "threshold_high": 0.9974
+        },
+        {
+          "feature": "smContext",
+          "rule_type": "mid_band",
+          "threshold_low": 0.37692001461982727,
+          "threshold_high": 0.3917999863624573
+        },
+        {
+          "feature": "atrProxy",
+          "rule_type": "mid_band",
+          "threshold_low": 1089.1,
+          "threshold_high": 1651.3000000000002
+        }
+      ],
+      "min_votes": 2
+    },
+    "US500m|TREND_CONTINUATION": {
+      "features": [
+        {
+          "feature": "msCompression",
+          "rule_type": "mid_band",
+          "threshold_low": 0.543,
+          "threshold_high": 0.9695
+        }
+      ],
+      "min_votes": 2
+    },
+    "USDCADm|MEAN_REVERSION": {
+      "features": [
+        {
+          "feature": "vpInsideVA",
+          "rule_type": "high_extreme",
+          "threshold_low": null,
+          "threshold_high": 1.0
+        },
+        {
+          "feature": "msCompression",
+          "rule_type": "mid_band",
+          "threshold_low": 0.501,
+          "threshold_high": 0.886
+        }
+      ],
+      "min_votes": 2
+    },
+    "USDCADm|SWEEP_REVERSAL": {
+      "features": [
+        {
+          "feature": "msCompression",
+          "rule_type": "high_extreme",
+          "threshold_low": null,
+          "threshold_high": 1.0
+        }
+      ],
+      "min_votes": 2
+    },
+    "USDCHFm|BREAKOUT": {
+      "features": [
+        {
+          "feature": "atrProxy",
+          "rule_type": "high_extreme",
+          "threshold_low": null,
+          "threshold_high": 148.9
+        },
+        {
+          "feature": "spreadToATR",
+          "rule_type": "low_extreme",
+          "threshold_low": 0.0843,
+          "threshold_high": null
+        }
+      ],
+      "min_votes": 2
+    },
+    "USDCHFm|BREAKOUT_RETEST": {
+      "features": [
+        {
+          "feature": "atrProxy",
+          "rule_type": "high_extreme",
+          "threshold_low": null,
+          "threshold_high": 153.42000000000002
+        },
+        {
+          "feature": "spreadToATR",
+          "rule_type": "low_extreme",
+          "threshold_low": 0.08289,
+          "threshold_high": null
+        }
+      ],
+      "min_votes": 2
+    },
+    "USDCHFm|MEAN_REVERSION": {
+      "features": [
+        {
+          "feature": "atrProxy",
+          "rule_type": "high_extreme",
+          "threshold_low": null,
+          "threshold_high": 144.95999999999998
+        },
+        {
+          "feature": "spreadToATR",
+          "rule_type": "low_extreme",
+          "threshold_low": 0.08744,
+          "threshold_high": null
+        }
+      ],
+      "min_votes": 2
+    },
+    "USDCHFm|PULLBACK": {
+      "features": [
+        {
+          "feature": "atrProxy",
+          "rule_type": "high_extreme",
+          "threshold_low": null,
+          "threshold_high": 149.6200000000001
+        },
+        {
+          "feature": "spreadToATR",
+          "rule_type": "low_extreme",
+          "threshold_low": 0.08454,
+          "threshold_high": null
+        }
+      ],
+      "min_votes": 2
+    },
+    "USDCHFm|SWEEP_REVERSAL": {
+      "features": [
+        {
+          "feature": "vpVAH",
+          "rule_type": "high_extreme",
+          "threshold_low": null,
+          "threshold_high": 0.0
+        },
+        {
+          "feature": "vpVAL",
+          "rule_type": "high_extreme",
+          "threshold_low": null,
+          "threshold_high": -0.0013815309755323814
+        },
+        {
+          "feature": "vpThinnessRatio",
+          "rule_type": "high_extreme",
+          "threshold_low": null,
+          "threshold_high": 0.65
+        },
+        {
+          "feature": "atrProxy",
+          "rule_type": "high_extreme",
+          "threshold_low": null,
+          "threshold_high": 139.50000000000003
+        },
+        {
+          "feature": "spreadToATR",
+          "rule_type": "low_extreme",
+          "threshold_low": 0.08976,
+          "threshold_high": null
+        }
+      ],
+      "min_votes": 2
+    },
+    "USDCHFm|TREND_CONTINUATION": {
+      "features": [
+        {
+          "feature": "atrProxy",
+          "rule_type": "high_extreme",
+          "threshold_low": null,
+          "threshold_high": 148.01999999999998
+        },
+        {
+          "feature": "spreadToATR",
+          "rule_type": "low_extreme",
+          "threshold_low": 0.08527,
+          "threshold_high": null
+        }
+      ],
+      "min_votes": 2
+    },
+    "USDJPYm|MEAN_REVERSION": {
+      "features": [
+        {
+          "feature": "msCompression",
+          "rule_type": "mid_band",
+          "threshold_low": 0.526,
+          "threshold_high": 0.895
+        }
+      ],
+      "min_votes": 2
+    },
+    "USDJPYm|SWEEP_REVERSAL": {
+      "features": [
+        {
+          "feature": "vpVAH",
+          "rule_type": "high_extreme",
+          "threshold_low": null,
+          "threshold_high": 0.3722638532420002
+        }
+      ],
+      "min_votes": 2
+    },
+    "USOILm|BREAKOUT": {
+      "features": [
+        {
+          "feature": "msCompression",
+          "rule_type": "high_extreme",
+          "threshold_low": null,
+          "threshold_high": 1.0
+        }
+      ],
+      "min_votes": 2
+    },
+    "USOILm|MEAN_REVERSION": {
+      "features": [
+        {
+          "feature": "msCompression",
+          "rule_type": "high_extreme",
+          "threshold_low": null,
+          "threshold_high": 1.0
+        },
+        {
+          "feature": "msCompression",
+          "rule_type": "mid_band",
+          "threshold_low": 0.5022,
+          "threshold_high": 0.9224
+        }
+      ],
+      "min_votes": 2
+    },
+    "USOILm|PULLBACK": {
+      "features": [
+        {
+          "feature": "msCompression",
+          "rule_type": "high_extreme",
+          "threshold_low": null,
+          "threshold_high": 1.0
+        }
+      ],
+      "min_votes": 2
+    },
+    "USOILm|SWEEP_REVERSAL": {
+      "features": [
+        {
+          "feature": "msCompression",
+          "rule_type": "high_extreme",
+          "threshold_low": null,
+          "threshold_high": 1.0
+        }
+      ],
+      "min_votes": 2
+    },
+    "USOILm|TREND_CONTINUATION": {
+      "features": [
+        {
+          "feature": "msCompression",
+          "rule_type": "high_extreme",
+          "threshold_low": null,
+          "threshold_high": 1.0
+        }
+      ],
+      "min_votes": 2
+    },
+    "USTECm|MEAN_REVERSION": {
+      "features": [
+        {
+          "feature": "msCompression",
+          "rule_type": "mid_band",
+          "threshold_low": 0.495,
+          "threshold_high": 0.9093
+        }
+      ],
+      "min_votes": 2
+    },
+    "USTECm|TREND_CONTINUATION": {
+      "features": [
+        {
+          "feature": "msCompression",
+          "rule_type": "mid_band",
+          "threshold_low": 0.557,
+          "threshold_high": 0.9257
+        }
+      ],
+      "min_votes": 2
+    },
+    "XAGEURm|BREAKOUT": {
+      "features": [
+        {
+          "feature": "msCompression",
+          "rule_type": "mid_band",
+          "threshold_low": 0.5412,
+          "threshold_high": 0.8545999999999999
+        }
+      ],
+      "min_votes": 2
+    },
+    "XAGEURm|BREAKOUT_RETEST": {
+      "features": [
+        {
+          "feature": "msCompression",
+          "rule_type": "mid_band",
+          "threshold_low": 0.572,
+          "threshold_high": 0.875
+        }
+      ],
+      "min_votes": 2
+    },
+    "XAGEURm|MEAN_REVERSION": {
+      "features": [
+        {
+          "feature": "msCompression",
+          "rule_type": "mid_band",
+          "threshold_low": 0.48419999999999996,
+          "threshold_high": 0.8026
+        }
+      ],
+      "min_votes": 2
+    },
+    "XAGEURm|PULLBACK": {
+      "features": [
+        {
+          "feature": "msCompression",
+          "rule_type": "mid_band",
+          "threshold_low": 0.539,
+          "threshold_high": 0.849
+        }
+      ],
+      "min_votes": 2
+    },
+    "XAGEURm|TREND_CONTINUATION": {
+      "features": [
+        {
+          "feature": "msCompression",
+          "rule_type": "mid_band",
+          "threshold_low": 0.525,
+          "threshold_high": 0.8480999999999999
+        }
+      ],
+      "min_votes": 2
+    },
+    "XAGGBPm|PULLBACK": {
+      "features": [
+        {
+          "feature": "ofFlowIntensity",
+          "rule_type": "low_extreme",
+          "threshold_low": 0.303,
+          "threshold_high": null
+        }
+      ],
+      "min_votes": 2
+    },
+    "XAGUSDm|BREAKOUT": {
+      "features": [
+        {
+          "feature": "msCompression",
+          "rule_type": "mid_band",
+          "threshold_low": 0.5389,
+          "threshold_high": 0.8691999999999999
+        }
+      ],
+      "min_votes": 2
+    },
+    "XAGUSDm|SWEEP_REVERSAL": {
+      "features": [
+        {
+          "feature": "msCompression",
+          "rule_type": "high_extreme",
+          "threshold_low": null,
+          "threshold_high": 1.0
+        }
+      ],
+      "min_votes": 2
+    },
+    "XAGUSDm|TREND_CONTINUATION": {
+      "features": [
+        {
+          "feature": "msCompression",
+          "rule_type": "mid_band",
+          "threshold_low": 0.518,
+          "threshold_high": 0.858
+        }
+      ],
+      "min_votes": 2
+    },
+    "XAUAUDm|SWEEP_REVERSAL": {
+      "features": [
+        {
+          "feature": "msCompression",
+          "rule_type": "mid_band",
+          "threshold_low": 0.512,
+          "threshold_high": 0.7517999999999999
+        }
+      ],
+      "min_votes": 2
+    },
+    "XAUEURm|MEAN_REVERSION": {
+      "features": [
+        {
+          "feature": "msCompression",
+          "rule_type": "mid_band",
+          "threshold_low": 0.567,
+          "threshold_high": 0.8201999999999999
+        }
+      ],
+      "min_votes": 2
+    },
+    "XAUGBPm|SWEEP_REVERSAL": {
+      "features": [
+        {
+          "feature": "vpDistToHVN",
+          "rule_type": "high_extreme",
+          "threshold_low": null,
+          "threshold_high": 1.0747000000000013
+        },
+        {
+          "feature": "vpCompVAL",
+          "rule_type": "low_extreme",
+          "threshold_low": -1.371142880655019,
+          "threshold_high": null
+        },
+        {
+          "feature": "vpCompVAL",
+          "rule_type": "high_extreme",
+          "threshold_low": null,
+          "threshold_high": 0.22444580492070215
+        },
+        {
+          "feature": "vpCompInsideVA",
+          "rule_type": "low_extreme",
+          "threshold_low": 0.0,
+          "threshold_high": null
+        },
+        {
+          "feature": "auctHVNStrength",
+          "rule_type": "low_extreme",
+          "threshold_low": 0.6295000000000001,
+          "threshold_high": null
+        },
+        {
+          "feature": "msCompression",
+          "rule_type": "high_extreme",
+          "threshold_low": null,
+          "threshold_high": 0.9616000000000001
+        },
+        {
+          "feature": "msCompression",
+          "rule_type": "mid_band",
+          "threshold_low": 0.5282,
+          "threshold_high": 0.7587999999999999
+        }
+      ],
+      "min_votes": 2
+    },
+    "XAUUSDm|ANCHORED_PULLBACK": {
+      "features": [
+        {
+          "feature": "vpCompVAL",
+          "rule_type": "high_extreme",
+          "threshold_low": null,
+          "threshold_high": -0.08051205321602886
+        }
+      ],
+      "min_votes": 2
+    },
+    "XAUUSDm|SWEEP_REVERSAL": {
+      "features": [
+        {
+          "feature": "msCompression",
+          "rule_type": "high_extreme",
+          "threshold_low": null,
+          "threshold_high": 1.0
+        }
+      ],
+      "min_votes": 2
+    }
+  },
+  "global_fallback": {
+    "features": [
+      {
+        "feature": "vpPOC",
+        "rule_type": "low_extreme",
+        "threshold_low": -0.9925731574247992,
+        "threshold_high": null
+      },
+      {
+        "feature": "vpVAH",
+        "rule_type": "low_extreme",
+        "threshold_low": -0.19433754037342676,
+        "threshold_high": null
+      },
+      {
+        "feature": "vpVAL",
+        "rule_type": "low_extreme",
+        "threshold_low": -2.003394920423465,
+        "threshold_high": null
+      },
+      {
+        "feature": "vpVAL",
+        "rule_type": "mid_band",
+        "threshold_low": -0.24504120447107045,
+        "threshold_high": -0.0007847306906041012
+      },
+      {
+        "feature": "vpInsideVA",
+        "rule_type": "high_extreme",
+        "threshold_low": null,
+        "threshold_high": 1.0
+      },
+      {
+        "feature": "vpDistToLVN",
+        "rule_type": "mid_band",
+        "threshold_low": 0.171,
+        "threshold_high": 0.519
+      },
+      {
+        "feature": "vpPriceVsPOC",
+        "rule_type": "mid_band",
+        "threshold_low": -0.3767,
+        "threshold_high": 0.3643
+      },
+      {
+        "feature": "vpDailyPOC",
+        "rule_type": "low_extreme",
+        "threshold_low": -3.279020432554409,
+        "threshold_high": null
+      },
+      {
+        "feature": "vpCompPOC",
+        "rule_type": "low_extreme",
+        "threshold_low": -5.372331400547262,
+        "threshold_high": null
+      },
+      {
+        "feature": "vpCompVAH",
+        "rule_type": "low_extreme",
+        "threshold_low": -1.0156727929115505,
+        "threshold_high": null
+      },
+      {
+        "feature": "vpCompVAL",
+        "rule_type": "low_extreme",
+        "threshold_low": -10.480609479002974,
+        "threshold_high": null
+      },
+      {
+        "feature": "vpCompInsideVA",
+        "rule_type": "low_extreme",
+        "threshold_low": 0.0,
+        "threshold_high": null
+      },
+      {
+        "feature": "vpDistCompPOC",
+        "rule_type": "high_extreme",
+        "threshold_low": null,
+        "threshold_high": 0.047
+      },
+      {
+        "feature": "vpThinnessRatio",
+        "rule_type": "high_extreme",
+        "threshold_low": null,
+        "threshold_high": 0.7
+      },
+      {
+        "feature": "vpProfileShape",
+        "rule_type": "high_extreme",
+        "threshold_low": null,
+        "threshold_high": 2.0
+      },
+      {
+        "feature": "vpBestHVNScore",
+        "rule_type": "high_extreme",
+        "threshold_low": null,
+        "threshold_high": 0.783
+      },
+      {
+        "feature": "vpDevPOCDir",
+        "rule_type": "high_extreme",
+        "threshold_low": null,
+        "threshold_high": 1.0
+      },
+      {
+        "feature": "vpDevPOCDir",
+        "rule_type": "mid_band",
+        "threshold_low": 0.0,
+        "threshold_high": 0.825
+      },
+      {
+        "feature": "vpDevPOCSlope",
+        "rule_type": "high_extreme",
+        "threshold_low": null,
+        "threshold_high": 0.34
+      },
+      {
+        "feature": "vpDevPOCSlope",
+        "rule_type": "mid_band",
+        "threshold_low": 0.006,
+        "threshold_high": 0.182
+      },
+      {
+        "feature": "vpMigrationScore",
+        "rule_type": "high_extreme",
+        "threshold_low": null,
+        "threshold_high": 1.0
+      },
+      {
+        "feature": "vpMigrationScore",
+        "rule_type": "mid_band",
+        "threshold_low": 0.685,
+        "threshold_high": 0.825
+      },
+      {
+        "feature": "vpMigrationConf",
+        "rule_type": "high_extreme",
+        "threshold_low": null,
+        "threshold_high": 1.0
+      },
+      {
+        "feature": "auctAcceptance",
+        "rule_type": "high_extreme",
+        "threshold_low": null,
+        "threshold_high": 0.909
+      },
+      {
+        "feature": "auctAcceptance",
+        "rule_type": "mid_band",
+        "threshold_low": 0.187,
+        "threshold_high": 0.61
+      },
+      {
+        "feature": "auctBalance",
+        "rule_type": "low_extreme",
+        "threshold_low": 0.524,
+        "threshold_high": null
+      },
+      {
+        "feature": "auctFailure",
+        "rule_type": "mid_band",
+        "threshold_low": 0.15,
+        "threshold_high": 0.25
+      },
+      {
+        "feature": "auctRegimeConf",
+        "rule_type": "low_extreme",
+        "threshold_low": 0.56,
+        "threshold_high": null
+      },
+      {
+        "feature": "auctRegimeConf",
+        "rule_type": "high_extreme",
+        "threshold_low": null,
+        "threshold_high": 0.85
+      },
+      {
+        "feature": "auctExpReward",
+        "rule_type": "low_extreme",
+        "threshold_low": 0.259,
+        "threshold_high": null
+      },
+      {
+        "feature": "auctExpReward",
+        "rule_type": "mid_band",
+        "threshold_low": 0.629,
+        "threshold_high": 1.206
+      },
+      {
+        "feature": "auctExpMoveATR",
+        "rule_type": "low_extreme",
+        "threshold_low": 0.672,
+        "threshold_high": null
+      },
+      {
+        "feature": "auctTargetProb",
+        "rule_type": "low_extreme",
+        "threshold_low": 0.309,
+        "threshold_high": null
+      },
+      {
+        "feature": "auctTargetProb",
+        "rule_type": "high_extreme",
+        "threshold_low": null,
+        "threshold_high": 0.448
+      },
+      {
+        "feature": "auctTargetProb",
+        "rule_type": "mid_band",
+        "threshold_low": 0.359,
+        "threshold_high": 0.429
+      },
+      {
+        "feature": "auctExhaustion",
+        "rule_type": "low_extreme",
+        "threshold_low": 0.096,
+        "threshold_high": null
+      },
+      {
+        "feature": "auctContinuation",
+        "rule_type": "high_extreme",
+        "threshold_low": null,
+        "threshold_high": 0.3
+      },
+      {
+        "feature": "auctHVNStrength",
+        "rule_type": "high_extreme",
+        "threshold_low": null,
+        "threshold_high": 0.955
+      },
+      {
+        "feature": "auctLVNStrength",
+        "rule_type": "low_extreme",
+        "threshold_low": 0.769,
+        "threshold_high": null
+      },
+      {
+        "feature": "vpLTTransitionScore",
+        "rule_type": "high_extreme",
+        "threshold_low": null,
+        "threshold_high": 0.502
+      },
+      {
+        "feature": "vpLTBalanceStability",
+        "rule_type": "low_extreme",
+        "threshold_low": 0.498,
+        "threshold_high": null
+      },
+      {
+        "feature": "vpLTPOCVelocity",
+        "rule_type": "mid_band",
+        "threshold_low": -224.4409,
+        "threshold_high": 2076.1162799999925
+      },
+      {
+        "feature": "msCompression",
+        "rule_type": "high_extreme",
+        "threshold_low": null,
+        "threshold_high": 1.0
+      },
+      {
+        "feature": "msCompression",
+        "rule_type": "mid_band",
+        "threshold_low": 0.521,
+        "threshold_high": 0.86
+      },
+      {
+        "feature": "msContext",
+        "rule_type": "mid_band",
+        "threshold_low": 0.38100001215934753,
+        "threshold_high": 0.5680000185966492
+      },
+      {
+        "feature": "ofFlowIntensity",
+        "rule_type": "low_extreme",
+        "threshold_low": 0.29,
+        "threshold_high": null
+      },
+      {
+        "feature": "ofFlowIntensity",
+        "rule_type": "mid_band",
+        "threshold_low": 0.332,
+        "threshold_high": 0.41
+      },
+      {
+        "feature": "ofContext",
+        "rule_type": "mid_band",
+        "threshold_low": 0.3023333251476288,
+        "threshold_high": 0.33683332800865173
+      },
+      {
+        "feature": "liqContext",
+        "rule_type": "high_extreme",
+        "threshold_low": null,
+        "threshold_high": 0.5680000185966492
+      },
+      {
+        "feature": "liqContext",
+        "rule_type": "mid_band",
+        "threshold_low": 0.4291999936103821,
+        "threshold_high": 0.5134000182151794
+      },
+      {
+        "feature": "smZoneQuality",
+        "rule_type": "low_extreme",
+        "threshold_low": 0.721,
+        "threshold_high": null
+      },
+      {
+        "feature": "smZoneQuality",
+        "rule_type": "high_extreme",
+        "threshold_low": null,
+        "threshold_high": 1.063
+      },
+      {
+        "feature": "smContext",
+        "rule_type": "low_extreme",
+        "threshold_low": 0.35659998655319214,
+        "threshold_high": null
+      },
+      {
+        "feature": "smContext",
+        "rule_type": "high_extreme",
+        "threshold_low": null,
+        "threshold_high": 0.42100000381469727
+      },
+      {
+        "feature": "atrProxy",
+        "rule_type": "high_extreme",
+        "threshold_low": null,
+        "threshold_high": 12785.1
+      },
+      {
+        "feature": "atrProxy",
+        "rule_type": "mid_band",
+        "threshold_low": 146.6,
+        "threshold_high": 1218.9
+      },
+      {
+        "feature": "spreadToATR",
+        "rule_type": "high_extreme",
+        "threshold_low": null,
+        "threshold_high": 0.3589
+      }
+    ],
+    "min_votes": 2
+  },
+  "min_votes": 2
+}

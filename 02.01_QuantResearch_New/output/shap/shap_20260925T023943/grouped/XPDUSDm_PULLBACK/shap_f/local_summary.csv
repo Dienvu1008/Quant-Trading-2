@@ -1,0 +1,9 @@
+feature,win_top3_freq,lose_top3_freq,total_top3_freq,win_bias
+spreadPoints,20,20,40,0.49999999998750005
+avgSpread,18,19,37,0.48648648647333825
+spreadToATR,20,10,30,0.6666666666444444
+atrProxy,1,8,9,0.11111111109876542
+vpCompVAL,1,0,1,0.9999999989999999
+profilerMigMean,0,1,1,0.0
+TP,0,1,1,0.0
+vpLTTransitionScore,0,1,1,0.0

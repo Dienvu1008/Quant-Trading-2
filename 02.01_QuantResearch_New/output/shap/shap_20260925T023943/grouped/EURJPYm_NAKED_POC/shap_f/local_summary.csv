@@ -1,0 +1,15 @@
+feature,win_top3_freq,lose_top3_freq,total_top3_freq,win_bias
+avgSpread,16,15,31,0.5161290322414152
+vpCompPOC,16,12,28,0.5714285714081633
+auctAcceptance,0,10,10,0.0
+vpVAOverlapRatio,7,1,8,0.874999999890625
+auctExpMoveATR,6,1,7,0.8571428570204082
+auctLVNStrength,6,0,6,0.9999999998333333
+msSpreadScore,0,6,6,0.0
+atrProxy,1,4,5,0.19999999996
+ofDeltaProxy,5,0,5,0.9999999998
+vpMigrationScore,0,3,3,0.0
+ofAbsorption,0,3,3,0.0
+spreadPoints,0,3,3,0.0
+vpDailyPOC,2,1,3,0.6666666664444444
+smFVG,1,1,2,0.49999999975

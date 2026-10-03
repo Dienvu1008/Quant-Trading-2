@@ -22,7 +22,8 @@ from scipy import stats
 warnings.filterwarnings("ignore")
 _HERE = Path(__file__).parent
 sys.path.insert(0, str(_HERE))
-from data_loader import load_funnel, load_trades, merge_funnel_trades
+from data_loader import (load_funnel, load_trades, merge_funnel_trades,
+                         split_by_style, has_trail_styles, TRAIL_STYLES)
 
 OUTPUT_DIR = _HERE / "output" / "06_sizing_calibration"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -43,7 +44,7 @@ MIN_EV_TO_SCALE_UP = 0.0    # any positive EV qualifies (Kelly handles the rest)
 MAX_PVAL           = 0.10
 
 
-def run(funnel_df=None, trade_df=None, all_results=None):
+def run(funnel_df=None, trade_df=None, all_results=None, production_style=1):
     t0 = time.time()
     print("\n" + "=" * 60)
     print("VP PHASE 06 — SIZING CALIBRATION (Fractional Kelly)")
@@ -52,9 +53,25 @@ def run(funnel_df=None, trade_df=None, all_results=None):
     if funnel_df is None: funnel_df = load_funnel()
     if trade_df is None:  trade_df  = load_trades()
 
-    merged = merge_funnel_trades(funnel_df, trade_df, tolerance_sec=14400, min_records=10)
-    if merged is None or len(merged) < MIN_OOS_TRADES * 2:
+    merged_all = merge_funnel_trades(funnel_df, trade_df, tolerance_sec=14400, min_records=10)
+    if merged_all is None or len(merged_all) < MIN_OOS_TRADES * 2:
         print("  [SKIP] Insufficient data"); return {"lot_multipliers": []}
+
+    # Lot multipliers feed VPGetLotMultiplier (applied Live), so calibrate on the
+    # PRODUCTION style. This also restores the i.i.d. assumption behind the Kelly
+    # t-test/fold-agreement (one trade per signal instead of 3 correlated ones).
+    # The full 3-style frame is kept to require the sizing edge (Kelly sign) to
+    # hold across ALL exit styles before trusting a scale-up.
+    multi_style = has_trail_styles(merged_all)
+    prod_df, all_styles = split_by_style(merged_all, production_style)
+    if multi_style:
+        print(f"  [STYLE] production={production_style} baseline: "
+              f"{len(prod_df)} trades (of {len(merged_all)} across all styles)")
+    merged = prod_df
+    if merged is None or len(merged) < MIN_OOS_TRADES * 2:
+        print(f"  [SKIP] Insufficient production-style data "
+              f"({0 if merged is None else len(merged)} < {MIN_OOS_TRADES*2})")
+        return {"lot_multipliers": []}
 
     if "time" in merged.columns:
         merged = merged.sort_values("time").reset_index(drop=True)
@@ -105,11 +122,20 @@ def run(funnel_df=None, trade_df=None, all_results=None):
             "reason":      meta["reason"],
         }
         results.append(rec)
-        tag = "✓" if meta["validated"] else "·"
+        tag = "[OK]" if meta["validated"] else "[--]"
         print(f"  {tag} {sym:<12} {setup:<20} mult={mult:.2f}  "
               f"EV=${meta['ev_oos']:+.2f}  WR={meta['wr_oos']:.1%}  "
               f"K={meta['kelly_frac']:.2f}  folds={meta['fold_agree']:.0%}  "
               f"p={meta['pval_oos']:.3f}")
+
+    # ── Robustness across trailing styles ────────────────────────
+    # A sizing edge should not depend on the exit policy: require the Kelly sign
+    # (edge direction) to match across all 3 trailing styles before trusting a
+    # scale-up/scale-down. Adds robust_across_styles + kelly_by_style per group.
+    if results and multi_style:
+        _robustness_check(results, all_styles)
+        n_robust = sum(1 for r in results if r.get("robust_across_styles"))
+        print(f"  Robust across all 3 styles: {n_robust}/{len(results)}")
 
     # Sort: validated first, then by lot_mult descending
     results.sort(key=lambda r: (-int(r["validated"]), -r["lot_mult"]))
@@ -249,6 +275,64 @@ def _no_opinion(reason: str) -> dict:
         "fold_agree": 0.0, "pval_oos": 1.0,
         "validated": False, "reason": reason,
     }
+
+
+def _kelly_raw(profits):
+    """Standard Kelly K = WR - (1-WR)/b on a profit array, or None if degenerate."""
+    p = np.asarray(profits, dtype=np.float64)
+    wins = p[p > 0]; loses = p[p < 0]
+    if len(wins) == 0 or len(loses) == 0:
+        return None
+    b = np.mean(wins) / np.abs(np.mean(loses))
+    if b <= 0:
+        return None
+    wr = np.mean(p > 0)
+    return wr - (1 - wr) / b
+
+
+def _robustness_check(results, all_styles, min_per_style=MIN_OOS_TRADES):
+    """For each (symbol, setup) group, compute Kelly per trailing style. The
+    sizing edge is robust iff all 3 styles have >= min_per_style trades AND their
+    Kelly values share the same sign (edge direction independent of exit policy).
+    Writes robust_across_styles + kelly_by_style into each result dict.
+    """
+    if "trailStyle" not in all_styles.columns or PROFIT_COL not in all_styles.columns:
+        for r in results:
+            r["robust_across_styles"] = False
+        return results
+
+    m = all_styles.copy()
+    m["trailStyle"] = pd.to_numeric(m["trailStyle"], errors="coerce")
+    m = m[m["trailStyle"].isin(TRAIL_STYLES)]
+    has_sym = "symbol" in m.columns
+    has_setup = "setupType" in m.columns
+
+    for r in results:
+        sub = m
+        if has_sym and r["symbol"] != "_GLOBAL":
+            sub = sub[sub["symbol"] == r["symbol"]]
+        if has_setup and r["setup"] != "ALL":
+            sub = sub[sub["setupType"] == r["setup"]]
+
+        kelly_by_style = {}
+        for style in TRAIL_STYLES:
+            s = sub[sub["trailStyle"] == style]
+            prof = pd.to_numeric(s[PROFIT_COL], errors="coerce").dropna().values
+            if len(prof) < min_per_style:
+                kelly_by_style[style] = None
+            else:
+                k = _kelly_raw(prof)
+                kelly_by_style[style] = None if k is None else float(k)
+
+        r["kelly_by_style"] = {str(s): (None if kelly_by_style.get(s) is None
+                                        else round(kelly_by_style[s], 4)) for s in TRAIL_STYLES}
+        present = [kelly_by_style.get(s) for s in TRAIL_STYLES]
+        if all(v is not None for v in present):
+            signs = {np.sign(v) for v in present if v != 0}
+            r["robust_across_styles"] = (len(signs) == 1)
+        else:
+            r["robust_across_styles"] = False
+    return results
 
 
 if __name__ == "__main__":

@@ -1,0 +1,9 @@
+{
+  "ran_at": "2026-09-28T00:57:14.201823Z",
+  "n_dev_rows": 270557,
+  "n_features_evaluated": 59,
+  "n_candidates": 2970,
+  "warnings": [
+    "Group XPDUSDm/BREAKOUT_RETEST: 9 rows < 60, skipped"
+  ]
+}

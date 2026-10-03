@@ -1,0 +1,6 @@
+feature,win_top3_freq,lose_top3_freq,total_top3_freq,win_bias
+avgSpread,20,20,40,0.49999999998750005
+vpLTAcceptanceAtPrice,17,14,31,0.5483870967565037
+profilerBalMean,13,17,30,0.4333333333188889
+liqStopCluster,10,5,15,0.6666666666222222
+vpCompVAH,0,4,4,0.0

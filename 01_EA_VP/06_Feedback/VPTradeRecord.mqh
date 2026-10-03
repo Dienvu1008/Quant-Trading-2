@@ -7,8 +7,10 @@ struct SVPTradeRecord
 {
    // ─── Trade Identity ───
    ulong    ticket;
+   string   signalId;        // links this trade to its funnel signal row (1 signal -> up to 3 trades)
    string   symbol;
    ESetupType setupType;
+   int      trailingStyle;   // ETrailingStyle applied to this position (-1/0/1)
    bool     isBuy;
    double   entryPrice;
    double   exitPrice;

@@ -1,0 +1,17 @@
+{
+  "experiment_id": "EXP-2026-09-28-001",
+  "outcome": "SUCCESS",
+  "n_frozen_rules": 0,
+  "n_holdout_confirmed": 0,
+  "n_soft_gates": 2,
+  "allowed_actions": [
+    "deploy_soft_gates_as_tilt",
+    "collect_more_data_for_hard_gate_experiment"
+  ],
+  "forbidden_actions": [
+    "rerun_same_contract_on_same_dataset",
+    "modify_shape_priors_after_seeing_result"
+  ],
+  "message": "Only 2 soft gate(s) survived; no hard gates to evaluate on holdout.",
+  "ran_at": "2026-09-28T01:00:15.055858Z"
+}

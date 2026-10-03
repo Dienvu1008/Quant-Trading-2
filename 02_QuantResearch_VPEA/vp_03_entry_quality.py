@@ -32,7 +32,8 @@ except ImportError:
 warnings.filterwarnings("ignore")
 _HERE = Path(__file__).parent
 sys.path.insert(0, str(_HERE))
-from data_loader import load_funnel, load_trades, merge_funnel_trades, FUNNEL_FEATURES
+from data_loader import (load_funnel, load_trades, merge_funnel_trades, FUNNEL_FEATURES,
+                         split_by_style, has_trail_styles, TRAIL_STYLES)
 
 OUTPUT_DIR = _HERE / "output" / "03_entry_quality"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -56,6 +57,17 @@ MIN_AUC = 0.55
 MAX_BRIER = 0.25
 FDR_LEVEL = 0.05
 OOS_RATIO = 0.30
+
+# ─── Exit-independent target ──────────────────────────────────────
+# A "good entry" should be defined by the entry's PROFIT POTENTIAL, not by how
+# the position happened to be exited (which depends on the trailing style).
+# MFE_GOOD_ATR: an entry is "good" if its max favourable excursion reaches this
+#   many ATR (measured from the longest-lived position of the signal, so an
+#   early trailing exit on one style doesn't understate the entry's potential).
+# WIN_STYLE_FRACTION: fallback when MFE is unavailable — an entry is "good" if it
+#   was profitable in at least this fraction of the 3 trailing styles.
+MFE_GOOD_ATR = 1.0
+WIN_STYLE_FRACTION = 2.0 / 3.0
 
 PRE_REGISTERED = {
     # Raw structure features and composites are split into SEPARATE categories so
@@ -98,7 +110,7 @@ INTERACTION_DEFS = [
 ]
 
 
-def run(funnel_df=None, trade_df=None, all_results=None):
+def run(funnel_df=None, trade_df=None, all_results=None, production_style=1):
     t0 = time.time()
     print("\n" + "=" * 60)
     print("VP PHASE 03 — ENTRY QUALITY (ROBUST v2)")
@@ -109,14 +121,31 @@ def run(funnel_df=None, trade_df=None, all_results=None):
     if funnel_df is None: funnel_df = load_funnel()
     if trade_df is None: trade_df = load_trades()
 
-    merged = merge_funnel_trades(funnel_df, trade_df, tolerance_sec=14400, min_records=15)
-    if merged is None or len(merged) < MIN_SAMPLES:
+    merged_all = merge_funnel_trades(funnel_df, trade_df, tolerance_sec=14400, min_records=15)
+    if merged_all is None or len(merged_all) < MIN_SAMPLES:
         print("  [SKIP] Insufficient data"); return {"entry_quality_gates": []}
 
-    if len(merged) > MAX_RECORDS:
-        merged = merged.sample(n=MAX_RECORDS, random_state=42)
+    if len(merged_all) > MAX_RECORDS:
+        merged_all = merged_all.sample(n=MAX_RECORDS, random_state=42)
 
-    merged = _compute_target(merged)
+    # Exit-INDEPENDENT target: define "good entry" from profit potential (MFE) or
+    # cross-style win consistency, computed on the full 3-style frame so the label
+    # is not distorted by the exit policy. Then train the gate on the PRODUCTION
+    # style only (matches Live), carrying that exit-independent label.
+    multi_style = has_trail_styles(merged_all)
+    merged_all = _compute_target(merged_all, multi_style)
+
+    prod_df, _all = split_by_style(merged_all, production_style)
+    if multi_style:
+        print(f"  [STYLE] production={production_style} baseline: "
+              f"{len(prod_df)} trades (of {len(merged_all)} across all styles) | "
+              f"exit-independent label")
+    merged = prod_df
+    if merged is None or len(merged) < MIN_SAMPLES:
+        print(f"  [SKIP] Insufficient production-style data "
+              f"({0 if merged is None else len(merged)} < {MIN_SAMPLES})")
+        return {"entry_quality_gates": []}
+
     merged = _compute_interactions(merged)
     if "time" in merged.columns:
         merged = merged.sort_values("time").reset_index(drop=True)
@@ -139,7 +168,7 @@ def run(funnel_df=None, trade_df=None, all_results=None):
         gate = _build_gate(sub, sym, setup, feats, all_p_values)
         if gate:
             all_gates.append(gate)
-            v = "✓" if gate["validated"] else "✗"
+            v = "[OK]" if gate["validated"] else "[--]"
             print(f"  [{sym}_{setup}] {v} lift={gate['wr_lift_mean']:+.1%} AUC={gate.get('auc_mean',0):.2f}")
 
     # FDR + OOS
@@ -158,15 +187,49 @@ def run(funnel_df=None, trade_df=None, all_results=None):
     return {"entry_quality_gates": all_gates}
 
 
-def _compute_target(merged):
+def _compute_target(merged, multi_style=False):
+    """Define the entry-quality label WITHOUT reference to how the trade exited.
+
+    Priority:
+      1. MFE-based (best): 'good' if the entry's max favourable excursion reaches
+         MFE_GOOD_ATR. With 3-style data the MFE is taken as the MAX over the
+         signal's 3 positions (grouped by signalId), so an early trailing exit on
+         one style does not understate the entry's true potential.
+      2. Cross-style win consistency: 'good' if the entry was profitable in
+         >= WIN_STYLE_FRACTION of its trailing styles (needs signalId + trailStyle).
+      3. Legacy fallback: profitUSD > 0 (single-policy data with no MFE).
+    The old label (exitReason == TP_HIT) is intentionally dropped — it is a direct
+    function of the trailing style and mislabels the same entry differently per style.
+    """
     merged = merged.copy()
-    if "exitReason" in merged.columns and (merged["exitReason"] == "TP_HIT").sum() >= MIN_TP:
-        merged["_target"] = (merged["exitReason"] == "TP_HIT").astype(np.int8)
-        if "mfeATR" in merged.columns:
-            strong = (merged["exitReason"] == "TRAIL_STOP") & (merged["profitUSD"] > 0) & (merged["mfeATR"] > 1.5)
-            merged.loc[strong, "_target"] = 1
-    else:
-        merged["_target"] = (merged["profitUSD"] > 0).astype(np.int8)
+
+    # ── 1. MFE-based, exit-independent ───────────────────────────
+    if "mfeATR" in merged.columns and merged["mfeATR"].notna().any():
+        mfe = pd.to_numeric(merged["mfeATR"], errors="coerce")
+        if multi_style and "signalId" in merged.columns:
+            # Use the best (max) MFE achieved across the signal's 3 positions.
+            sig_max = mfe.groupby(merged["signalId"]).transform("max")
+            eff_mfe = sig_max
+        else:
+            eff_mfe = mfe
+        merged["_target"] = (eff_mfe >= MFE_GOOD_ATR).astype(np.int8)
+        # Guard: if MFE is degenerate (all NaN/constant), fall through below.
+        if merged["_target"].nunique() > 1:
+            return merged
+
+    # ── 2. Cross-style win consistency ───────────────────────────
+    if (multi_style and "signalId" in merged.columns and "trailStyle" in merged.columns
+            and "profitUSD" in merged.columns):
+        prof = pd.to_numeric(merged["profitUSD"], errors="coerce")
+        win = (prof > 0).astype(float)
+        # fraction of this signal's positions that were profitable
+        win_frac = win.groupby(merged["signalId"]).transform("mean")
+        merged["_target"] = (win_frac >= WIN_STYLE_FRACTION).astype(np.int8)
+        if merged["_target"].nunique() > 1:
+            return merged
+
+    # ── 3. Legacy fallback ───────────────────────────────────────
+    merged["_target"] = (pd.to_numeric(merged.get("profitUSD", 0), errors="coerce") > 0).astype(np.int8)
     return merged
 
 

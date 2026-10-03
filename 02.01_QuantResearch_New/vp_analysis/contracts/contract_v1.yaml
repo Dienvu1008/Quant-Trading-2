@@ -1,0 +1,188 @@
+version: "v1"
+
+# ─── Dataset identity (v3) ──────────────────────────────────────
+# observation_unit: 1 production-style trade per signal (L4/L5/L4b)
+# dev_all_styles: 3-style subset used by L10a (set at split time)
+observation_unit: "1 trade (production_style filtered) per signal"
+style_filter: "production_style=1"
+
+# ─── Pre-registered features (THEORY, not data) ─────────────────
+pre_registered:
+  trend:    ["bosScore", "chochScore", "trendDirection",
+             "bosQuality", "chochQuality", "structAlign", "auctContinuation"]
+  quality:  ["auctTradeQuality", "auctBalance", "auctExpReward", "dataQuality"]
+  risk:     ["auctReversalRisk", "auctFailure", "auctExhaustion", "spreadToATR"]
+  volume:   ["vpMigrationConf", "vpBestHVNScore", "auctHVNStrength", "vpDevPOCSlope"]
+  structure: ["vpDevPOCDir", "vpVAOverlapBias", "vpLTAcceptanceAtPrice", "vpThinnessRatio"]
+  longterm: ["vpLTPOCMigration", "vpLTNearestZoneStrength",
+             "vpLTTransitionScore", "vpLTBalanceStability"]
+  engine:   ["msCompression", "ofFlowIntensity", "liqSweep", "smZoneQuality",
+             "msContext", "ofContext", "liqContext", "smContext"]
+  interactions: ["ix_tq_mig", "ix_bos_trend", "ix_spread_atr", "ix_cont_mig",
+                 "ix_fail_reversal", "ix_struct_bos", "ix_devpoc_ltpoc",
+                 "ix_exhaust_lt", "ix_acceptance", "ix_target_rr"]
+
+# ─── Directional priors ──────────────────────────────────────────
+feature_direction:
+  auctContinuation: 1
+  auctTradeQuality: 1
+  auctBalance: 1
+  auctExpReward: 1
+  vpMigrationConf: 1
+  vpBestHVNScore: 1
+  auctExhaustion: -1
+  auctFailure: -1
+  auctReversalRisk: -1
+  vpThinnessRatio: -1
+  spreadToATR: -1
+  vpDevPOCDir: 0
+  vpDevPOCSlope: 0
+  auctHVNStrength: 1
+  vpLTAcceptanceAtPrice: 1
+  bosScore: 1
+  chochScore: 1
+  trendDirection: 0
+  bosQuality: 0
+  chochQuality: 0
+  structAlign: 1
+  dataQuality: 1
+  vpVAOverlapBias: 0
+  vpLTPOCMigration: 0
+  vpLTNearestZoneStrength: 1
+  vpLTTransitionScore: -1
+  vpLTBalanceStability: 1
+  msCompression: 0
+  ofFlowIntensity: 0
+  liqSweep: 0
+  smZoneQuality: 0
+  msContext: 0
+  ofContext: 0
+  liqContext: 0
+  smContext: 0
+  ix_tq_mig: 1
+  ix_bos_trend: 1
+  ix_spread_atr: -1
+  ix_cont_mig: 1
+  ix_fail_reversal: -1
+  ix_struct_bos: 1
+  ix_devpoc_ltpoc: 1
+  ix_exhaust_lt: -1
+  ix_acceptance: 1
+  ix_target_rr: 1
+
+# ─── Shape priors (IMMUTABLE — verify only, do not change) ───────
+shape_priors:
+  auctTradeQuality: MONO_UP
+  auctContinuation: MONO_UP
+  auctBalance: MONO_UP
+  auctExpReward: MONO_UP
+  vpMigrationConf: MONO_UP
+  auctHVNStrength: MONO_UP
+  structAlign: MONO_UP
+  auctReversalRisk: MONO_DOWN
+  auctFailure: MONO_DOWN
+  auctExhaustion: MONO_DOWN
+  spreadToATR: MONO_DOWN
+  vpThinnessRatio: MONO_DOWN
+  vpLTTransitionScore: MONO_DOWN
+  vpDevPOCDir: BAND
+  vpVAOverlapBias: BAND
+  msCompression: BAND
+  smZoneQuality: MONO_UP
+
+allowed_interactions:
+  - ix_tq_mig
+  - ix_bos_trend
+  - ix_spread_atr
+  - ix_cont_mig
+  - ix_fail_reversal
+  - ix_struct_bos
+  - ix_devpoc_ltpoc
+  - ix_exhaust_lt
+  - ix_acceptance
+  - ix_target_rr
+
+gate_types: ["threshold", "band"]
+allowed_directions: [1, -1, 0]
+
+primary_test: "one-sided t-test on fold EVs"
+screening_test: "permutation, 100 iter, early stop p>0.30"
+multiple_testing_method: "benjamini-hochberg"
+
+# ─── FDR pools (v3: 4 isolated pools) ───────────────────────────
+# n_total_hypotheses is NOT stored here — it is computed at L1 and
+# frozen into run_meta.json before any discovery layer begins.
+fdr_pools:
+  hard_gate:
+    name: hard_gate
+    max_hypotheses: 500
+    alpha: 0.05
+  soft_gate:
+    name: soft_gate
+    max_hypotheses: 200
+    alpha: 0.05
+  regime_block:
+    name: regime_block
+    max_hypotheses: 200
+    alpha: 0.05
+  bad_entry:
+    name: bad_entry
+    max_hypotheses: 200
+    alpha: 0.05
+
+# ─── Two explicit targets (v3) ───────────────────────────────────
+# These are hashed as part of the contract. Changing either requires
+# a new contract version and a new experiment.
+edge_discovery_target:
+  name: "profitUSD"
+  definition: "profitUSD of the production-style trade"
+  used_by: ["L4", "L4b", "L5", "L7"]
+
+bad_entry_canary_target:
+  name: "MFE-based entry quality"
+  definition: "MFE_max_across_3_styles >= 1.0 ATR"
+  used_by: ["L10a"]
+
+# ─── Optimization budget (v3: tiebreaker added) ──────────────────
+# NOT hypothesis testing — no FDR applied here.
+# tiebreaker: when multiple (sl, tp) combos share the same utility,
+# sort by sl_atr DESC then tp_atr DESC to avoid a noise-driven
+# preference for small SL values.
+optimization_budget:
+  sl_candidates: [1.0, 1.5, 2.0]
+  tp_candidates: [1.0, 1.5, 2.0]
+  sizing_configs: 5
+  utility_function: "expectancy"
+  tiebreaker: ["sl_atr DESC", "tp_atr DESC"]
+
+stopping_rules:
+  min_group_samples: 30
+  min_fold_consistency: 0.60
+  min_effect_size: 0.05
+  max_outer_folds: 5
+  max_inner_folds: 3
+
+production_criteria:
+  min_ev: 0.05
+  min_pf: 1.10
+  min_wr: 0.35
+  require_robust_across_styles: false
+  require_holdout_confirmation: true
+
+selection_budget:
+  max_experiments_per_dataset: 5
+  max_contract_changes_per_day: 3
+  cooldown_hours_between_experiments: 24
+  max_eda_inspect_and_rerun: 1
+  config_frozen_after_start: true
+
+split_ratio: 0.70
+split_method: "temporal"
+
+# ─── Identity hashes (placeholders — replaced by pipeline builder) ─
+dataset_hash: "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+code_hash: "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+config_hash: "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+feature_registry_hash: "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+target_definition_hash: "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+split_definition_hash: "sha256:0000000000000000000000000000000000000000000000000000000000000000"

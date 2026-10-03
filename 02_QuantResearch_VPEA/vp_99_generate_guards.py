@@ -28,15 +28,21 @@ OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 EA_CONFIG_DIR = Path(r"c:\Users\Dienv\AppData\Roaming\MetaQuotes\Terminal\D0E8209F77C8CF37AD8BF550E51FF075\MQL5\Experts\My own robots\Quant Trading 2\01_EA_VP\Config")
 
 
-def run():
+def run(production_style=1):
     t0 = time.time()
     print("\n" + "=" * 60)
     print("VP PHASE 99 — GENERATE EDGEGUARD CONFIG")
     print("=" * 60)
+    print(f"  Production trailing style: {production_style} "
+          f"(guards derived from this style's trades)")
 
     config = {
-        "version": "2.0",
+        "version": "2.1",
         "generated_at": time.strftime("%Y-%m-%d %H:%M:%S"),
+        # The style the EA runs Live. All guard-bound numbers below were computed
+        # on this style's trades; the *_robust flags mark rules that also held
+        # across all 3 trailing styles. Regenerate if the Live style changes.
+        "production_style": production_style,
         "feature_gates": {"strict": [], "soft": []},
         "block_rules": [],
         "symbol_configs": [],
@@ -62,7 +68,9 @@ def run():
                 r.get("test_ev_mean", 0) > 0 and r.get("n_folds", 0) >= 2]
         config["feature_gates"]["strict"] = strict
         config["feature_gates"]["soft"] = soft
-        print(f"  Feature gates: {len(strict)} strict, {len(soft)} soft")
+        n_robust = sum(1 for r in (strict + soft) if r.get("robust_across_styles"))
+        rob_note = f", {n_robust} robust(3-style)" if any("robust_across_styles" in r for r in rules) else ""
+        print(f"  Feature gates: {len(strict)} strict, {len(soft)} soft{rob_note}")
 
     # ─── Load Phase 03: Entry gates ───
     p03 = _HERE / "output" / "03_entry_quality" / "entry_gates.json"
@@ -85,7 +93,10 @@ def run():
     if p05.exists():
         with open(p05) as f:
             config["block_rules"] = json.load(f)
-        print(f"  Block rules: {len(config['block_rules'])}")
+        br = config["block_rules"]
+        n_robust = sum(1 for r in br if r.get("robust_across_styles"))
+        rob_note = f", {n_robust} robust(3-style)" if any("robust_across_styles" in r for r in br) else ""
+        print(f"  Block rules: {len(br)}{rob_note}")
 
     # ─── Load Phase 06: Lot multipliers ───
     p06 = _HERE / "output" / "06_sizing_calibration" / "lot_multipliers.json"
@@ -125,8 +136,14 @@ def _generate_mqh(config, path):
     lines.append("#ifndef __VP_EA_EDGEGUARD_CONFIG_MQH__")
     lines.append("#define __VP_EA_EDGEGUARD_CONFIG_MQH__")
     lines.append("")
+    prod_style = config.get("production_style", 1)
+    style_label = {-1: "no-trailing", 0: "conservative", 1: "expansion"}.get(prod_style, "?")
     lines.append("// =============================================================")
     lines.append(f"// VP EdgeGuard Config -- Generated {time.strftime('%Y-%m-%d %H:%M')}")
+    lines.append(f"// Production trailing style: {prod_style} ({style_label})")
+    lines.append("//   Guard numbers derived from this style's trades. [ROBUST] in a")
+    lines.append("//   comment = the rule also held across all 3 trailing styles.")
+    lines.append("//   Regenerate with a new production_style if the Live style changes.")
     lines.append("// DO NOT EDIT MANUALLY -- regenerate with vp_99_generate_guards.py")
     lines.append("// =============================================================")
     lines.append("")
@@ -145,8 +162,9 @@ def _generate_mqh(config, path):
         if rule_type == "auction_regime":
             regime_val = _regime_name_to_int(condition)
             if regime_val >= 0:
+                rtag = " [ROBUST]" if rule.get("robust_across_styles") else ""
                 lines.append(f'   if(symbol=="{sym}" && setup=="{setup}" && regime=={regime_val}) return true; '
-                             f'// EV={rule.get("ev", 0):.2f} n={rule.get("n", 0)}')
+                             f'// EV={rule.get("ev", 0):.2f} n={rule.get("n", 0)}{rtag}')
     lines.append("   return false;")
     lines.append("}")
     lines.append("")
@@ -175,19 +193,20 @@ def _generate_mqh(config, path):
         ev = rule.get("test_ev_mean", 0)
         validated = rule.get("validated", False)
         tag = "STRICT" if validated else "soft"
+        rtag = " [ROBUST]" if rule.get("robust_across_styles") else ""
 
         if gate_type == "threshold" and direction == 1 and low is not None:
             lines.append(f'   if(symbol=="{sym}" && setup=="{setup}" && feature=="{feat}" && value<{low:.4f}) '
-                         f'return 0.0; // [{tag}] EV={ev:.3f}')
+                         f'return 0.0; // [{tag}] EV={ev:.3f}{rtag}')
             emitted += 1
         elif gate_type == "threshold" and direction == -1 and high is not None:
             lines.append(f'   if(symbol=="{sym}" && setup=="{setup}" && feature=="{feat}" && value>{high:.4f}) '
-                         f'return 0.0; // [{tag}] EV={ev:.3f}')
+                         f'return 0.0; // [{tag}] EV={ev:.3f}{rtag}')
             emitted += 1
         elif gate_type == "band" and low is not None and high is not None:
             lines.append(f'   if(symbol=="{sym}" && setup=="{setup}" && feature=="{feat}" && '
                          f'(value<{low:.4f} || value>{high:.4f})) '
-                         f'return 0.0; // [{tag}] band EV={ev:.3f}')
+                         f'return 0.0; // [{tag}] band EV={ev:.3f}{rtag}')
             emitted += 1
 
     lines.append("   return 1.0; // no gate matched")
@@ -271,8 +290,9 @@ def _generate_mqh(config, path):
         ev    = m.get("ev_oos", 0.0)
         wr    = m.get("wr_oos", 0.0)
         n     = m.get("n_oos", 0)
+        rtag  = " [ROBUST]" if m.get("robust_across_styles") else ""
         lines.append(f'   if(symbol=="{sym}" && setup=="{setup}") return {mult:.4f}; '
-                     f'// EV=${ev:+.2f} WR={wr:.0%} n={n}')
+                     f'// EV=${ev:+.2f} WR={wr:.0%} n={n}{rtag}')
 
     # Global fallback (per setup, any symbol)
     for m in sorted(global_mults, key=lambda x: x.get("lot_mult", 1.0), reverse=True):
@@ -281,8 +301,9 @@ def _generate_mqh(config, path):
         ev    = m.get("ev_oos", 0.0)
         wr    = m.get("wr_oos", 0.0)
         n     = m.get("n_oos", 0)
+        rtag  = " [ROBUST]" if m.get("robust_across_styles") else ""
         lines.append(f'   if(setup=="{setup}") return {mult:.4f}; '
-                     f'// [global] EV=${ev:+.2f} WR={wr:.0%} n={n}')
+                     f'// [global] EV=${ev:+.2f} WR={wr:.0%} n={n}{rtag}')
 
     lines.append("   return 1.0; // no calibration data")
     lines.append("}")
@@ -305,6 +326,9 @@ def _regime_name_to_int(name):
 
 def _print_summary(config):
     print("\n  ─── SUMMARY ───")
+    ps = config.get("production_style", 1)
+    ps_label = {-1: "no-trailing", 0: "conservative", 1: "expansion"}.get(ps, "?")
+    print(f"  Production style: {ps} ({ps_label})")
     strict = config["feature_gates"]["strict"]
     soft = config["feature_gates"]["soft"]
     blocks = config["block_rules"]

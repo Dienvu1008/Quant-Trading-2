@@ -1,0 +1,16 @@
+feature,shape_detected,spearman_r,p_value,shap_range,mean_shap,n
+ofFlowIntensity,MONO_UP,0.8958,0.0,0.4631,0.0,59
+liqSessionLiq,MONO_UP,0.8384,0.0,0.2442,0.0,59
+auctMajorHVN,MONO_DOWN,-0.9305,0.0,0.4168,-0.0,59
+entryVpBestHVN,MONO_DOWN,-0.866,0.0,0.0127,0.0,59
+vpDailyPOC,MONO_DOWN,-0.9174,0.0,0.3649,0.0,59
+avgSpread,MONO_DOWN,-0.8688,0.0,0.2252,0.0,59
+entryLTNearestZoneStrength,MONO_UP,0.8653,0.0,0.0197,0.0,59
+auctLVNStrength,MONO_DOWN,-0.8378,0.0,0.0871,-0.0,59
+auctExpReward,MONO_UP,0.86,0.0,0.036,-0.0,59
+msTickImbalance,MONO_UP,0.8299,0.0,0.0838,-0.0,59
+auctReversalRisk,MONO_DOWN,-0.8321,0.0,0.0828,0.0,59
+vpLTPOC10d,MONO_DOWN,-0.8294,0.0,0.0802,-0.0,59
+entryVpMigrationConf,MONO_UP,0.9421,0.0,0.0852,-0.0,59
+liqDensity,MONO_UP,0.9134,0.0,0.0896,0.0,59
+spreadPoints,MONO_DOWN,-0.8627,0.0,0.0384,0.0,59

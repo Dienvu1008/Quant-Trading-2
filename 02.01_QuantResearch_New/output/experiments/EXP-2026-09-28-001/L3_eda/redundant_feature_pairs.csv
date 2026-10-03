@@ -1,0 +1,12 @@
+feature_a,feature_b,spearman_rho
+vpLTTransitionScore,vpLTBalanceStability,-1.0
+vpMigrationScore,auctContinuation,0.8715
+auctExpReward,auctExpMoveATR,0.8607
+vpPOC,vpPriceVsPOC,-0.8251
+auctAcceptance,auctTargetProb,-0.8223
+vpDevPOCDir,vpDevPOCSlope,0.8
+auctTradeQuality,auctTradeGrade,0.7861
+auctAcceptance,auctExhaustion,-0.7814
+vpLTPOCVelocity,vpLTPOCMigration,0.7633
+auctTradeQuality,auctExpReward,0.722
+vpPOC,vpVAL,0.7001

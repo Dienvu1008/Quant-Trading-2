@@ -1,0 +1,14 @@
+feature,win_top3_freq,lose_top3_freq,total_top3_freq,win_bias
+vpDistCompPOC,18,3,21,0.8571428571020409
+msContext,18,0,18,0.9999999999444444
+spreadToATR,14,2,16,0.8749999999453125
+spreadPoints,2,13,15,0.13333333332444444
+avgSpread,1,11,12,0.08333333332638888
+vpLTNearestZonePrice,0,11,11,0.0
+msCompression,0,8,8,0.0
+vpBestHVNScore,7,0,7,0.9999999998571428
+entryVpDistHVN,0,4,4,0.0
+vpLTAcceptanceAtPrice,0,4,4,0.0
+liqEqualHL,0,2,2,0.0
+vpDailyPOC,0,1,1,0.0
+vpDistToHVN,0,1,1,0.0

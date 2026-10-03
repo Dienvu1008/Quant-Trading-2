@@ -1,0 +1,16 @@
+feature,shape_detected,spearman_r,p_value,shap_range,mean_shap,n
+msTickVelocity,MONO_UP,0.8055,0.0,28.6322,0.0,81
+vpLTPOCAcceleration,MONO_UP,0.7727,0.0,32.1265,0.0,81
+auctLVNStrength,MONO_DOWN,-0.8891,0.0,24.733,-0.0,81
+ofDeltaProxy,MONO_DOWN,-0.7739,0.0,16.0354,-0.0,81
+entryLTNearestZoneStrength,MONO_DOWN,-0.658,0.0,10.8881,0.0,81
+auctReversalRisk,MONO_DOWN,-0.6459,0.0,11.8037,0.0,81
+ofParticipation,MONO_UP,0.8085,0.0,8.2963,-0.0,81
+entryVpThinnessRatio,MONO_UP,0.7847,0.0,4.75,-0.0,81
+smMitigation,MONO_DOWN,-0.6545,0.0,5.3986,-0.0,81
+smZoneQuality,MONO_DOWN,-0.7844,0.0,7.3085,-0.0,81
+vpLTPOC30d,FLAT,0.4721,9e-06,9.6559,-0.0,81
+entryVpDistLVN,MONO_UP,0.5495,0.0,7.3112,-0.0,81
+entryVpPOC,FLAT,0.4919,3e-06,5.9805,0.0,81
+thesis,NONLINEAR,-0.2903,0.008576,10.0228,-0.0,81
+msTickImbalance,MONO_DOWN,-0.8151,0.0,6.468,-0.0,81

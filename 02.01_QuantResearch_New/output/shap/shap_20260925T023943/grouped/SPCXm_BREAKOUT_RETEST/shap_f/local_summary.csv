@@ -1,0 +1,8 @@
+feature,win_top3_freq,lose_top3_freq,total_top3_freq,win_bias
+smZoneQuality,20,20,40,0.49999999998750005
+atrProxy,18,18,36,0.49999999998611117
+vpLTMajorLVNStrength,13,15,28,0.4642857142691327
+entryVpVAL,5,1,6,0.8333333331944445
+ofAbsorption,3,3,6,0.49999999991666666
+profilerTQMean,1,2,3,0.3333333332222222
+liqPremDisc,0,1,1,0.0

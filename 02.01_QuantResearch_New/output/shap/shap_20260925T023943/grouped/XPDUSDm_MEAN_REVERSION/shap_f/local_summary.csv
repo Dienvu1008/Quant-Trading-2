@@ -1,0 +1,11 @@
+feature,win_top3_freq,lose_top3_freq,total_top3_freq,win_bias
+spreadPoints,18,20,38,0.47368421051385046
+TP,9,18,27,0.33333333332098763
+entryVpDistLVN,7,9,16,0.43749999997265626
+vpVAOverlapRatio,13,2,15,0.8666666666088889
+smZoneQuality,4,6,10,0.39999999996
+ofFlowIntensity,4,2,6,0.6666666665555555
+auctTargetPrice,1,2,3,0.3333333332222222
+entryVpVAL,2,0,2,0.9999999995
+vpLTPOC10d,2,0,2,0.9999999995
+entryVpBestHVN,0,1,1,0.0

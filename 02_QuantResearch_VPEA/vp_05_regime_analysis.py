@@ -23,7 +23,8 @@ from collections import defaultdict
 warnings.filterwarnings("ignore")
 _HERE = Path(__file__).parent
 sys.path.insert(0, str(_HERE))
-from data_loader import load_funnel, load_trades, merge_funnel_trades, REGIME_NAMES
+from data_loader import (load_funnel, load_trades, merge_funnel_trades, REGIME_NAMES,
+                         split_by_style, has_trail_styles, TRAIL_STYLES)
 
 OUTPUT_DIR = _HERE / "output" / "05_regime_analysis"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -46,7 +47,7 @@ PROFIT_COL = "profitUSD"
 OOS_RATIO = 0.30
 
 
-def run(funnel_df=None, trade_df=None, all_results=None):
+def run(funnel_df=None, trade_df=None, all_results=None, production_style=1):
     t0 = time.time()
     print("\n" + "=" * 60)
     print("VP PHASE 05 — BLOCK RULES (ROBUST v2)")
@@ -55,12 +56,28 @@ def run(funnel_df=None, trade_df=None, all_results=None):
     if funnel_df is None: funnel_df = load_funnel()
     if trade_df is None: trade_df = load_trades()
 
-    merged = merge_funnel_trades(funnel_df, trade_df, tolerance_sec=14400, min_records=10)
-    if merged is None or len(merged) < MIN_SAMPLES_TRAIN * 3:
+    merged_all = merge_funnel_trades(funnel_df, trade_df, tolerance_sec=14400, min_records=10)
+    if merged_all is None or len(merged_all) < MIN_SAMPLES_TRAIN * 3:
         print("  [SKIP] Insufficient data"); return {"auction_block_rules": []}
 
-    if len(merged) > MAX_RECORDS:
-        merged = merged.sample(n=MAX_RECORDS, random_state=42)
+    if len(merged_all) > MAX_RECORDS:
+        merged_all = merged_all.sample(n=MAX_RECORDS, random_state=42)
+
+    # Block rules feed VPIsBlocked (applied Live), so discover them on the
+    # PRODUCTION style. The full 3-style frame is kept to later require a blocked
+    # regime to be unprofitable under ALL exit styles (a genuinely bad regime,
+    # not one that only loses under a particular trailing style).
+    multi_style = has_trail_styles(merged_all)
+    prod_df, all_styles = split_by_style(merged_all, production_style)
+    if multi_style:
+        print(f"  [STYLE] production={production_style} baseline: "
+              f"{len(prod_df)} trades (of {len(merged_all)} across all styles)")
+    merged = prod_df
+    if merged is None or len(merged) < MIN_SAMPLES_TRAIN * 3:
+        print(f"  [SKIP] Insufficient production-style data "
+              f"({0 if merged is None else len(merged)} < {MIN_SAMPLES_TRAIN*3})")
+        return {"auction_block_rules": []}
+
     if "time" in merged.columns:
         merged = merged.sort_values("time").reset_index(drop=True)
 
@@ -124,6 +141,15 @@ def run(funnel_df=None, trade_df=None, all_results=None):
         fdr_pass = fdr_mask[i] if i < len(fdr_mask) else False
         rule["fdr_significant"] = fdr_pass
         rule["final_validated"] = rule.get("oos_validated", False) and fdr_pass
+
+    # ── Robustness across trailing styles ────────────────────────
+    # A block rule is only trustworthy if the regime it blocks is unprofitable
+    # under EVERY exit style — otherwise it may just be losing because of one
+    # trailing policy. Require blocked-EV < 0 for all 3 styles.
+    if all_rules and multi_style:
+        all_rules = _robustness_check(all_rules, all_styles)
+        n_robust = sum(1 for r in all_rules if r.get("robust_across_styles"))
+        print(f"  Robust across all 3 styles: {n_robust}/{len(all_rules)}")
 
     final = [r for r in all_rules if r.get("final_validated")]
     print(f"  Final validated: {len(final)}")
@@ -420,6 +446,69 @@ def _oos_validation(rules, merged, profits, setup_arr, regime_arr, session_arr, 
         rule["oos_lift"] = round(oos_lift, 4)
         rule["oos_blocked_ev"] = round(oos_blocked_ev, 4)
         rule["oos_validated"] = (oos_lift >= MIN_EV_IMPROVEMENT * 0.5 and oos_blocked_ev < 0)
+    return rules
+
+
+def _prepare_arrays(df):
+    """Build the derived columns/arrays that _mask needs, on any frame."""
+    d = df.copy()
+    if "auctRegime" in d.columns:
+        d["regimeName"] = d["auctRegime"].map(REGIME_NAMES).fillna("UNKNOWN")
+    else:
+        d["regimeName"] = "UNKNOWN"
+    d["_session"] = d["session"].astype(str) if "session" in d.columns else "0"
+    if "vpLTTransitionScore" in d.columns:
+        ts = d["vpLTTransitionScore"].fillna(0)
+        d["_ltTransBin"] = np.where(ts > 0.5, "LT_HIGH", np.where(ts > 0.25, "LT_MED", "LT_LOW"))
+    else:
+        d["_ltTransBin"] = "LT_UNKNOWN"
+    return d
+
+
+def _robustness_check(rules, all_styles, min_blocked=MIN_SAMPLES_BLOCK):
+    """For each block rule, apply its mask within each trailing style and record
+    the blocked-EV per style. robust_across_styles=True iff all 3 styles have
+    >= min_blocked blocked trades AND blocked-EV < 0 in every style (the regime
+    is genuinely bad regardless of how the position is exited).
+    """
+    if ("trailStyle" not in all_styles.columns or PROFIT_COL not in all_styles.columns):
+        for r in rules:
+            r["robust_across_styles"] = False
+        return rules
+
+    d = _prepare_arrays(all_styles)
+    d["trailStyle"] = pd.to_numeric(d["trailStyle"], errors="coerce")
+    d = d[d["trailStyle"].isin(TRAIL_STYLES)]
+    has_sym = "symbol" in d.columns
+    has_setup = "setupType" in d.columns
+
+    for rule in rules:
+        sub_sym = d
+        if has_sym and rule["symbol"] != "_GLOBAL":
+            sub_sym = d[d["symbol"] == rule["symbol"]]
+        ev_by_style = {}
+        for style in TRAIL_STYLES:
+            s = sub_sym[sub_sym["trailStyle"] == style]
+            if len(s) == 0:
+                ev_by_style[style] = None
+                continue
+            setup_arr = s["setupType"].values if has_setup else np.array(["ALL"] * len(s))
+            regime_arr = s["regimeName"].values
+            session_arr = s["_session"].values
+            failure_arr = s["auctFailure"].values if "auctFailure" in s.columns else np.zeros(len(s))
+            lt_arr = s["_ltTransBin"].values
+            prof = pd.to_numeric(s[PROFIT_COL], errors="coerce").values.astype(np.float64)
+            mask = _mask(setup_arr, regime_arr, session_arr, failure_arr, lt_arr, rule)
+            nb = int(mask.sum())
+            ev_by_style[style] = float(prof[mask].mean()) if nb >= min_blocked else None
+
+        rule["blocked_ev_by_style"] = {str(s): (None if ev_by_style.get(s) is None
+                                                else round(ev_by_style[s], 4)) for s in TRAIL_STYLES}
+        present = [ev_by_style.get(s) for s in TRAIL_STYLES]
+        if all(v is not None for v in present):
+            rule["robust_across_styles"] = all(v < 0 for v in present)
+        else:
+            rule["robust_across_styles"] = False
     return rules
 
 

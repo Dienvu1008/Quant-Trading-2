@@ -1,0 +1,15 @@
+{
+  "n_signals": 270557,
+  "n_complete": 267990,
+  "label_counts": {
+    "catastrophic": 151291,
+    "mixed_good": 16939,
+    "bad": 92434,
+    "excellent": 5828,
+    "good": 1498
+  },
+  "n_bad": 243725,
+  "n_good": 7326,
+  "n_neutral": 16939,
+  "bad_rate": 0.909456
+}

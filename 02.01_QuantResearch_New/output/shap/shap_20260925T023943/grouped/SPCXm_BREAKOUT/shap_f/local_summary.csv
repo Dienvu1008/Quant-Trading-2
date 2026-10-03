@@ -1,0 +1,10 @@
+feature,win_top3_freq,lose_top3_freq,total_top3_freq,win_bias
+auctTradeQuality,17,16,33,0.5151515151359045
+auctLVNStrength,13,12,25,0.5199999999792
+ofDeltaProxy,8,10,18,0.44444444441975306
+vpPullbackPOC,10,6,16,0.6249999999609375
+profilerBalMean,6,8,14,0.4285714285408163
+vpLTPOC60d,3,5,8,0.374999999953125
+liqStopCluster,0,3,3,0.0
+SL,2,0,2,0.9999999995
+liqContext,1,0,1,0.9999999989999999

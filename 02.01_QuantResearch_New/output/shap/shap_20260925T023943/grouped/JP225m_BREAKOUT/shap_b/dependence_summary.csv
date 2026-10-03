@@ -1,0 +1,16 @@
+feature,shape_detected,spearman_r,p_value,shap_range,mean_shap,n
+auctDistHVN,FLAT,0.3817,0.000147,1.7472,-0.0,94
+msCompression,SATURATION,-0.4589,3e-06,1.2612,-0.0,94
+msSpreadScore,MONO_UP,0.5124,0.0,1.0021,-0.0,94
+liqContext,MONO_UP,0.7551,0.0,0.5925,0.0,94
+auctBalance,MONO_UP,0.6465,0.0,0.8322,-0.0,94
+ofParticipation,FLAT,0.4349,1.2e-05,0.9763,-0.0,94
+vpLTPOCAcceleration,MONO_UP,0.7165,0.0,0.1884,-0.0,94
+vpDistNakedPOC_ATR,MONO_DOWN,-0.7356,0.0,0.358,-0.0,94
+vpVAOverlapRatio,MONO_UP,0.8879,0.0,0.3199,0.0,94
+entryVpDistHVN,MONO_DOWN,-0.9023,0.0,0.4071,-0.0,94
+ofContext,FLAT,0.4535,4e-06,0.6568,-0.0,94
+vpNearestNakedPOC,MONO_DOWN,-0.7986,0.0,0.211,-0.0,94
+entryVpInsideVA,MONO_UP,0.866,0.0,0.173,0.0,94
+smContext,MONO_UP,0.7506,0.0,0.2489,0.0,94
+liqDensity,MONO_DOWN,-0.6895,0.0,0.3274,-0.0,94

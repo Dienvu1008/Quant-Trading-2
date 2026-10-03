@@ -314,13 +314,27 @@ void ResetVPPipelineState(SVPPipelineState &state, const string symbol)
    state.news.isNearNews = false;
 }
 
+// ─── Run mode preset ───
+// LIVE:       edgeguards on, funnel off, single position per signal (uses
+//             config.trailingStyle), runs live or in tester.
+// DATACOLLECT: tester-only, all triggers on, no position cap, funnel on, and
+//             every signal fires 3 positions with trailing styles -1/0/1 so the
+//             research pipeline can compare trailing behaviour on identical entries.
+enum EVPRunMode
+{
+   RUN_MODE_LIVE        = 0,
+   RUN_MODE_DATACOLLECT = 1
+};
+
 // ─── Config ───
 struct SVPEAConfig
 {
+   int     presetMode;           // EVPRunMode: 0=Live, 1=DataCollect
    double  riskPercent;
    double  fixedLot;
    int     maxPositionsPerSymbol;
    int     trailingStyle;
+   int     trailMinUpdateSecs;   // throttle: min seconds between normal trail stop advances
    int     profilerWarmupBars;
    int     newsBlockMinsBefore;
    int     newsBlockMinsAfter;
@@ -335,6 +349,7 @@ struct SVPEAConfig
    bool    enableAnchoredPullback;
    bool    logFunnel;
    bool    useEdgeGuards;      // Enable/disable EdgeGuard filtering
+   double  minTiltThreshold;   // Block trade if cumulative soft-tilt < this (0=off)
    bool    useSizingCalibration; // Use Phase 06 lot multipliers (maxLot mode)
    double  maxLot;               // Max lot when useSizingCalibration=true (0=symbol max)
    // Telegram notifications
@@ -350,10 +365,12 @@ struct SVPEAConfig
 
 void SetDefaultVPConfig(SVPEAConfig &config)
 {
+   config.presetMode = RUN_MODE_LIVE;
    config.riskPercent = 0.5;
    config.fixedLot = 0.0;
    config.maxPositionsPerSymbol = 2;
    config.trailingStyle = 1;
+   config.trailMinUpdateSecs = 60;
    config.profilerWarmupBars = 100;
    config.newsBlockMinsBefore = 30;
    config.newsBlockMinsAfter = 15;
@@ -368,6 +385,7 @@ void SetDefaultVPConfig(SVPEAConfig &config)
    config.enableAnchoredPullback = true;
    config.logFunnel = true;
    config.useEdgeGuards = false;
+   config.minTiltThreshold = 0.0;
    config.useSizingCalibration = false;
    config.maxLot = 0.0;
    config.telegramEnabled = false;

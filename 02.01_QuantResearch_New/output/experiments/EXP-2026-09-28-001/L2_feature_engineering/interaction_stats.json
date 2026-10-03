@@ -1,0 +1,119 @@
+{
+  "fit_source": "development",
+  "ran_at": "2026-09-28T00:53:00.514962+00:00",
+  "n_computed": 10,
+  "n_skipped": 0,
+  "warnings": [],
+  "interactions": [
+    {
+      "interaction_name": "ix_tq_mig",
+      "feature_a": "auctTradeQuality",
+      "feature_b": "vpMigrationConf",
+      "a_min": 0.167,
+      "a_max": 0.774,
+      "b_min": 0.05,
+      "b_max": 1.0,
+      "present": true,
+      "reason": ""
+    },
+    {
+      "interaction_name": "ix_bos_trend",
+      "feature_a": "bosQuality",
+      "feature_b": "structAlign",
+      "a_min": -0.8587039709091187,
+      "a_max": 0.9584000110626221,
+      "b_min": 0.0,
+      "b_max": 1.0,
+      "present": true,
+      "reason": ""
+    },
+    {
+      "interaction_name": "ix_spread_atr",
+      "feature_a": "spreadToATR",
+      "feature_b": "atrProxy",
+      "a_min": 0.0012,
+      "a_max": 5.4315,
+      "b_min": 23.1,
+      "b_max": 237848.5,
+      "present": true,
+      "reason": ""
+    },
+    {
+      "interaction_name": "ix_cont_mig",
+      "feature_a": "auctContinuation",
+      "feature_b": "vpMigrationConf",
+      "a_min": 0.0,
+      "a_max": 1.0,
+      "b_min": 0.05,
+      "b_max": 1.0,
+      "present": true,
+      "reason": ""
+    },
+    {
+      "interaction_name": "ix_fail_reversal",
+      "feature_a": "auctFailure",
+      "feature_b": "auctReversalRisk",
+      "a_min": 0.0,
+      "a_max": 1.0,
+      "b_min": 0.0,
+      "b_max": 0.93,
+      "present": true,
+      "reason": ""
+    },
+    {
+      "interaction_name": "ix_struct_bos",
+      "feature_a": "chochQuality",
+      "feature_b": "structAlign",
+      "a_min": -0.8421833515167236,
+      "a_max": 0.8414633274078369,
+      "b_min": 0.0,
+      "b_max": 1.0,
+      "present": true,
+      "reason": ""
+    },
+    {
+      "interaction_name": "ix_devpoc_ltpoc",
+      "feature_a": "vpDevPOCDir",
+      "feature_b": "vpLTPOCVelocity",
+      "a_min": -1.0,
+      "a_max": 1.0,
+      "b_min": -2038580.0604,
+      "b_max": 1985166.4384,
+      "present": true,
+      "reason": ""
+    },
+    {
+      "interaction_name": "ix_exhaust_lt",
+      "feature_a": "auctExhaustion",
+      "feature_b": "vpLTTrendExhaustion",
+      "a_min": 0.0,
+      "a_max": 1.0,
+      "b_min": 0.0,
+      "b_max": 1.0,
+      "present": true,
+      "reason": ""
+    },
+    {
+      "interaction_name": "ix_acceptance",
+      "feature_a": "vpInsideVA",
+      "feature_b": "auctAcceptance",
+      "a_min": 0.0,
+      "a_max": 1.0,
+      "b_min": 0.0,
+      "b_max": 1.0,
+      "present": true,
+      "reason": ""
+    },
+    {
+      "interaction_name": "ix_target_rr",
+      "feature_a": "auctTargetProb",
+      "feature_b": "RR",
+      "a_min": 0.15,
+      "a_max": 0.65,
+      "b_min": 0.8,
+      "b_max": 83.43,
+      "present": true,
+      "reason": ""
+    }
+  ]
+}

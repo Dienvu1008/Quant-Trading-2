@@ -27,7 +27,7 @@ public:
       if (m_fileHandle != INVALID_HANDLE)
       {
          string hdr =
-            "ticket,symbol,setupType,direction,entryTime,exitTime,holdingMinutes,"
+            "ticket,signalId,symbol,setupType,direction,trailStyle,entryTime,exitTime,holdingMinutes,"
             "entryPrice,exitPrice,profitPips,profitUSD,maeATR,mfeATR,exitReason,"
             "entryVpPOC,entryVpVAH,entryVpVAL,entryVpInsideVA,"
             "entryVpDistHVN,entryVpDistLVN,entryVpBestHVN,entryVpThinnessRatio,"
@@ -56,9 +56,11 @@ public:
 
       string line =
          IntegerToString((long)rec.ticket) + d +
+         rec.signalId + d +
          rec.symbol + d +
          SetupTypeToString(rec.setupType) + d +
          dir + d +
+         IntegerToString(rec.trailingStyle) + d +
          TimeToString(rec.entryTime, TIME_DATE|TIME_SECONDS) + d +
          TimeToString(rec.exitTime, TIME_DATE|TIME_SECONDS) + d +
          IntegerToString(rec.holdingMinutes) + d +

@@ -1,0 +1,16 @@
+feature,shape_detected,spearman_r,p_value,shap_range,mean_shap,n
+smFVG,BAND,-0.4893,7e-06,29.294,0.0,76
+liqStopCluster,MONO_DOWN,-0.8827,0.0,15.4956,0.0,76
+vpPriceVsPOC,MONO_UP,0.8724,0.0,22.0127,0.0,76
+vpLTTrendDuration,MONO_DOWN,-0.6413,0.0,12.8446,0.0,76
+vpVAOverlapRatio,MONO_DOWN,-0.5839,0.0,16.2041,0.0,76
+vpCompVAL,MONO_DOWN,-0.6303,0.0,18.178,-0.0,76
+TP,MONO_DOWN,-0.6709,0.0,10.3317,0.0,76
+auctShapeConf,MONO_UP,0.784,0.0,10.114,0.0,76
+auctRegimeConf,MONO_UP,0.5203,1e-06,10.0203,-0.0,76
+msCompression,MONO_DOWN,-0.8572,0.0,10.4584,-0.0,76
+msTickImbalance,MONO_UP,0.7272,0.0,7.5154,0.0,76
+vpLTPOC30d,MONO_UP,0.7194,0.0,4.456,-0.0,76
+auctTargetProb,MONO_UP,0.7044,0.0,4.8738,0.0,76
+liqContext,MONO_UP,0.8138,0.0,3.4614,-0.0,76
+thesis,MONO_DOWN,-0.8207,0.0,5.7304,0.0,76

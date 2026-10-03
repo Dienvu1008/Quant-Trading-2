@@ -1,0 +1,8 @@
+{
+  "n_signals": 270557,
+  "n_labeled": 270557,
+  "n_bad": 201719,
+  "n_good": 68838,
+  "base_bad_rate": 0.745569,
+  "mfe_threshold": 1.0
+}

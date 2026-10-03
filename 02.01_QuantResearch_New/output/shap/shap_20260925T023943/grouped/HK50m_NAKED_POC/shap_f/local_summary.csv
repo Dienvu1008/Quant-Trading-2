@@ -1,0 +1,8 @@
+feature,win_top3_freq,lose_top3_freq,total_top3_freq,win_bias
+vpLTNearestZoneDir,20,20,40,0.49999999998750005
+spreadToATR,20,20,40,0.49999999998750005
+msTickImbalance,14,5,19,0.7368421052243768
+ofAbsorption,3,9,12,0.24999999997916666
+profilerTQMean,2,4,6,0.33333333327777775
+auctExpReward,1,1,2,0.49999999975
+msCompression,0,1,1,0.0

@@ -1,0 +1,14 @@
+feature,win_top3_freq,lose_top3_freq,total_top3_freq,win_bias
+vpDailyPOC,18,12,30,0.59999999998
+liqSessionLiq,10,12,22,0.4545454545247934
+session,8,11,19,0.4210526315567867
+spreadToATR,5,11,16,0.31249999998046873
+vpPriceVsPOC,5,2,7,0.7142857141836735
+vpBestHVNScore,6,1,7,0.8571428570204082
+smMitigation,4,1,5,0.79999999984
+vpLTMajorLVNStrength,0,4,4,0.0
+vpLTBalanceStability,1,2,3,0.3333333332222222
+profilerMigMean,0,2,2,0.0
+smZoneQuality,1,1,2,0.49999999975
+auctDistHVN,2,0,2,0.9999999995
+auctTradeQuality,0,1,1,0.0

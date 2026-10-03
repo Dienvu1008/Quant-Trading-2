@@ -1,0 +1,171 @@
+{
+  "generated_at": "2026-09-28 08:55:04",
+  "experiment_id": "EXP-2026-09-28-001",
+  "mode": "RESEARCH - dev validated only",
+  "warning": "NOT holdout-confirmed. Use with small capital.",
+  "n_hard_gates": 0,
+  "n_soft_tilts": 2107,
+  "n_medians": 18050,
+  "top_soft": [
+    {
+      "symbol": "BTCUSDm",
+      "setup": "SWEEP_REVERSAL",
+      "feature": "vpMigrationConf",
+      "direction": -1,
+      "ev_lift": 0.094542,
+      "perm_pvalue": 0.0
+    },
+    {
+      "symbol": "BTCUSDm",
+      "setup": "SWEEP_REVERSAL",
+      "feature": "msCompression",
+      "direction": -1,
+      "ev_lift": 0.153875,
+      "perm_pvalue": 0.0
+    },
+    {
+      "symbol": "BTCUSDm",
+      "setup": "SWEEP_REVERSAL",
+      "feature": "ofFlowIntensity",
+      "direction": 1,
+      "ev_lift": 0.05664,
+      "perm_pvalue": 0.0
+    },
+    {
+      "symbol": "BTCUSDm",
+      "setup": "SWEEP_REVERSAL",
+      "feature": "liqContext",
+      "direction": -1,
+      "ev_lift": 0.07425,
+      "perm_pvalue": 0.0
+    },
+    {
+      "symbol": "BTCUSDm",
+      "setup": "MEAN_REVERSION",
+      "feature": "vpVAL",
+      "direction": 1,
+      "ev_lift": 0.056627,
+      "perm_pvalue": 0.0
+    },
+    {
+      "symbol": "BTCUSDm",
+      "setup": "MEAN_REVERSION",
+      "feature": "auctRegimeConf",
+      "direction": 1,
+      "ev_lift": 0.050449,
+      "perm_pvalue": 0.0
+    },
+    {
+      "symbol": "BTCUSDm",
+      "setup": "MEAN_REVERSION",
+      "feature": "auctTradeGrade",
+      "direction": 1,
+      "ev_lift": 0.09873,
+      "perm_pvalue": 0.0
+    },
+    {
+      "symbol": "BTCUSDm",
+      "setup": "MEAN_REVERSION",
+      "feature": "msCompression",
+      "direction": -1,
+      "ev_lift": 0.088266,
+      "perm_pvalue": 0.0
+    },
+    {
+      "symbol": "BTCUSDm",
+      "setup": "MEAN_REVERSION",
+      "feature": "ofFlowIntensity",
+      "direction": 1,
+      "ev_lift": 0.049398,
+      "perm_pvalue": 0.0
+    },
+    {
+      "symbol": "BTCUSDm",
+      "setup": "TREND_CONTINUATION",
+      "feature": "msCompression",
+      "direction": -1,
+      "ev_lift": 0.068497,
+      "perm_pvalue": 0.0
+    },
+    {
+      "symbol": "BTCUSDm",
+      "setup": "PULLBACK",
+      "feature": "msCompression",
+      "direction": -1,
+      "ev_lift": 0.050743,
+      "perm_pvalue": 0.0
+    },
+    {
+      "symbol": "BTCUSDm",
+      "setup": "BREAKOUT_RETEST",
+      "feature": "msCompression",
+      "direction": -1,
+      "ev_lift": 0.062452,
+      "perm_pvalue": 0.0
+    },
+    {
+      "symbol": "ETHUSDm",
+      "setup": "ANCHORED_PULLBACK",
+      "feature": "msCompression",
+      "direction": -1,
+      "ev_lift": 0.071492,
+      "perm_pvalue": 0.0
+    },
+    {
+      "symbol": "ETHUSDm",
+      "setup": "SWEEP_REVERSAL",
+      "feature": "msCompression",
+      "direction": -1,
+      "ev_lift": 0.188068,
+      "perm_pvalue": 0.0
+    },
+    {
+      "symbol": "ETHUSDm",
+      "setup": "MEAN_REVERSION",
+      "feature": "vpVAL",
+      "direction": 1,
+      "ev_lift": 0.057178,
+      "perm_pvalue": 0.0
+    },
+    {
+      "symbol": "ETHUSDm",
+      "setup": "MEAN_REVERSION",
+      "feature": "vpVAOverlapRatio",
+      "direction": 1,
+      "ev_lift": 0.072841,
+      "perm_pvalue": 0.0
+    },
+    {
+      "symbol": "ETHUSDm",
+      "setup": "MEAN_REVERSION",
+      "feature": "auctTargetProb",
+      "direction": 1,
+      "ev_lift": 0.073432,
+      "perm_pvalue": 0.0
+    },
+    {
+      "symbol": "ETHUSDm",
+      "setup": "MEAN_REVERSION",
+      "feature": "msCompression",
+      "direction": -1,
+      "ev_lift": 0.130084,
+      "perm_pvalue": 0.0
+    },
+    {
+      "symbol": "ETHUSDm",
+      "setup": "MEAN_REVERSION",
+      "feature": "ofFlowIntensity",
+      "direction": 1,
+      "ev_lift": 0.066868,
+      "perm_pvalue": 0.0
+    },
+    {
+      "symbol": "ETHUSDm",
+      "setup": "MEAN_REVERSION",
+      "feature": "liqContext",
+      "direction": -1,
+      "ev_lift": 0.081939,
+      "perm_pvalue": 0.0
+    }
+  ]
+}

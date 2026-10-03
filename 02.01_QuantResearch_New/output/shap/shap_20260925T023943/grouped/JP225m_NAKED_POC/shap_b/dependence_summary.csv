@@ -1,0 +1,16 @@
+feature,shape_detected,spearman_r,p_value,shap_range,mean_shap,n
+msTickImbalance,MONO_DOWN,-0.8553,0.0,0.3426,0.0,67
+auctTargetConf,FLAT,0.3894,0.001125,1.204,0.0,67
+entryVpThinnessRatio,MONO_DOWN,-0.8327,0.0,1.0294,0.0,67
+vpLTMajorLVNStrength,MONO_UP,0.6744,0.0,0.5774,-0.0,67
+vpLTBalanceStability,MONO_UP,0.7298,0.0,0.5366,0.0,67
+vpLTNearestZoneDir,MONO_DOWN,-0.85,0.0,0.2294,0.0,67
+entryVpDistHVN,MONO_UP,0.803,0.0,0.3534,0.0,67
+liqContext,MONO_DOWN,-0.6937,0.0,0.3079,0.0,67
+msTickVelocity,MONO_UP,0.8577,0.0,0.0486,0.0,67
+entryVpMigrationConf,MONO_DOWN,-0.6824,0.0,0.2982,0.0,67
+vpLTPOC10d,MONO_DOWN,-0.866,0.0,0.0083,-0.0,67
+auctHVNStrength,MONO_UP,0.8545,0.0,0.0833,0.0,67
+entryVpDistLVN,MONO_DOWN,-0.8366,0.0,0.3307,0.0,67
+entryAuctTargetConf,MONO_UP,0.5214,6e-06,0.2794,-0.0,67
+auctAcceptance,MONO_UP,0.7402,0.0,0.2639,-0.0,67

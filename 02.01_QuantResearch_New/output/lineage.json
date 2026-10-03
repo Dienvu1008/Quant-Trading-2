@@ -1,0 +1,14 @@
+[
+  {
+    "experiment_id": "EXP-2026-09-28-001",
+    "research_contract_hash": "sha256:1b9eada56653f7a171e797f29501369ce70af35de6c9a586c5575d52ebc801ea",
+    "dataset_hash": "sha256:3895a7ad769c97321900877cf88c66548fbd374224621be91f6d8ca1ccfb02f5",
+    "code_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+    "status": "COMPLETED",
+    "parent_experiment_id": null,
+    "started_at": "2026-09-28T00:47:42.402916Z",
+    "completed_at": "2026-09-28T01:00:15.056776Z",
+    "result": "SUCCESS",
+    "reason_for_supersession": null
+  }
+]

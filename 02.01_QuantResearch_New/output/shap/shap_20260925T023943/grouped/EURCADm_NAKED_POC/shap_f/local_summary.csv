@@ -1,0 +1,10 @@
+feature,win_top3_freq,lose_top3_freq,total_top3_freq,win_bias
+liqSessionLiq,19,20,39,0.48717948716699544
+ofAbsorption,12,14,26,0.46153846152071004
+ofDeltaProxy,8,10,18,0.44444444441975306
+vpLTAcceptanceAtPrice,7,9,16,0.43749999997265626
+TP,9,3,12,0.7499999999375
+entryVpVAL,1,3,4,0.2499999999375
+auctExpMoveATR,3,0,3,0.9999999996666666
+profilerTQMean,1,0,1,0.9999999989999999
+msCompression,0,1,1,0.0

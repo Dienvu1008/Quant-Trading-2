@@ -1,0 +1,7 @@
+feature,win_top3_freq,lose_top3_freq,total_top3_freq,win_bias
+liqStopCluster,17,18,35,0.4857142857004082
+spreadToATR,18,16,34,0.5294117646903115
+auctDistLVN,16,10,26,0.6153846153609468
+spreadPoints,6,8,14,0.4285714285408163
+vpDistCompPOC,2,7,9,0.22222222219753085
+auctMajorLVN,1,1,2,0.49999999975

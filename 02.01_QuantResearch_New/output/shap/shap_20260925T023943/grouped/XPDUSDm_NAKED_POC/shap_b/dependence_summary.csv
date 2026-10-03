@@ -1,0 +1,16 @@
+feature,shape_detected,spearman_r,p_value,shap_range,mean_shap,n
+entryProfilerSamples,BAND,0.4505,5.6e-05,1200.2386,-0.0,74
+spreadPoints,MONO_DOWN,-0.9095,0.0,1238.1325,0.0,74
+avgSpread,MONO_DOWN,-0.8927,0.0,1330.8338,0.0,74
+TP,MONO_DOWN,-0.6648,0.0,647.0747,0.0,74
+entryLTNearestZoneStrength,MONO_DOWN,-0.717,0.0,306.9351,-0.0,74
+vpLTTrendDuration,BAND,-0.4281,0.000142,554.5968,-0.0,74
+atrProxy,BAND,-0.4484,6.2e-05,593.7833,-0.0,74
+vpLTPOC60d,BAND,0.4204,0.000192,448.6997,-0.0,74
+vpLTNearestZonePrice,MONO_DOWN,-0.7288,0.0,370.686,0.0,74
+vpLTPOC30d,MONO_DOWN,-0.8694,0.0,310.4376,0.0,74
+vpLTAcceptanceAtPrice,MONO_UP,0.876,0.0,363.5672,0.0,74
+profilerMigMean,MONO_DOWN,-0.6132,0.0,477.0888,-0.0,74
+vpLTMajorHVNPrice,BAND,0.3187,0.005647,438.9842,0.0,74
+vpLTBalanceStability,BAND,0.403,0.00037,366.5808,0.0,74
+auctTargetPrice,MONO_DOWN,-0.7985,0.0,251.5705,-0.0,74

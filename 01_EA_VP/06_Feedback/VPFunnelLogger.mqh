@@ -34,6 +34,54 @@ private:
       return (best < 999) ? best : 0;
    }
 
+   // ── Composite helpers matching data_loader._build_structure_composites() ──
+
+   // bosQuality = bosScore * bosConfirmed * proximity, signed by bosBullish
+   // proximity = clamp(1 - structDistATR/3, 0, 1)
+   string _ComputeBosQuality(const SVPPipelineState &state)
+   {
+      if(!state.bosConfirmed) return "0.000";
+      double structDist = _ComputeStructDist(state);
+      double prox = MathMax(0.0, MathMin(1.0, 1.0 - structDist / 3.0));
+      double magnitude = MathMax(0.0, MathMin(1.0, state.bosScore)) * prox;
+      double sign = state.bosBullish ? 1.0 : -1.0;
+      return DoubleToString(magnitude * sign, 4);
+   }
+
+   // chochQuality = chochScore * chochConfirmed * proximity, signed by chochBullish
+   string _ComputeChochQuality(const SVPPipelineState &state)
+   {
+      if(!state.chochConfirmed) return "0.000";
+      double entry = state.primarySetup.entryPrice;
+      double atr = state.marketData.atrProxy * state.marketData.pointSize;
+      double prox = 0.5;
+      if(state.chochLevel > 0 && atr > 0)
+         prox = MathMax(0.0, MathMin(1.0, 1.0 - MathAbs(entry - state.chochLevel) / (atr * 3.0)));
+      double magnitude = MathMax(0.0, MathMin(1.0, state.chochScore)) * prox;
+      double sign = state.chochBullish ? 1.0 : -1.0;
+      return DoubleToString(magnitude * sign, 4);
+   }
+
+   // structAlign = 1.0 if structure direction agrees with trend, 0.0 if opposed, 0.5 if neutral
+   string _ComputeStructAlign(const SVPPipelineState &state)
+   {
+      double bosSign   = state.bosConfirmed   ? (state.bosBullish   ? 1.0 : -1.0) : 0.0;
+      double chochSign = state.chochConfirmed ? (state.chochBullish ? 1.0 : -1.0) : 0.0;
+      double structSign = 0.0;
+      if(bosSign   != 0) structSign += bosSign;
+      if(chochSign != 0) structSign += chochSign;
+      if(structSign > 0) structSign = 1.0;
+      else if(structSign < 0) structSign = -1.0;
+
+      int trend = state.trendDirection;
+      double align;
+      if(trend == 0)        align = 0.5;
+      else if((trend > 0 && structSign > 0) || (trend < 0 && structSign < 0)) align = 1.0;
+      else if(structSign == 0) align = 0.5;
+      else                  align = 0.0;
+      return DoubleToString(align, 4);
+   }
+
 public:
    CVPFunnelLogger(void) { m_fileHandle = INVALID_HANDLE; m_enabled = false; m_logCount = 0; }
 
@@ -47,7 +95,7 @@ public:
       m_fileHandle = FileOpen(filename, FILE_WRITE | FILE_TXT | FILE_COMMON);
       if (m_fileHandle != INVALID_HANDLE)
       {
-         string hdr = "ticket,timestamp,symbol,setupType,direction,session,"
+         string hdr = "ticket,signalId,timestamp,symbol,setupType,direction,trailStyle,session,"
             "entryPrice,SL,TP,RR,thesis,"
             "vpPOC,vpVAH,vpVAL,vpInsideVA,vpDistToHVN,vpDistToLVN,vpPriceVsPOC,vpDailyPOC,"
             "vpCompPOC,vpCompVAH,vpCompVAL,vpCompInsideVA,vpDistCompPOC,"
@@ -79,12 +127,21 @@ public:
             "msSpreadScore,msTickVelocity,msTickImbalance,msLiqVacuum,msCompression,"
             "ofDeltaProxy,ofCvdProxy,ofAbsorption,ofExhaustion,ofParticipation,ofDivergence,ofBullDiv,ofBearDiv,ofFlowIntensity,"
             "liqDensity,liqSweep,liqStopCluster,liqEqualHL,liqSessionLiq,liqPremDisc,"
-            "smOrderBlock,smFVG,smMitigation,smBreakerBlock,smRejectionBlock,smZoneQuality\n";
+            "smOrderBlock,smFVG,smMitigation,smBreakerBlock,smRejectionBlock,smZoneQuality,"
+            // ─── Python-compatible composites (computed inline) ───
+            // These match data_loader._build_structure_composites() and
+            // _build_engine_composites() so pipeline gates using them work in EA.
+            "bosQuality,chochQuality,structAlign,"
+            "msContext,ofContext,liqContext,smContext\n";
          FileWriteString(m_fileHandle, hdr);
       }
    }
 
-   void LogSetup(const SVPPipelineState &state, ulong ticket = 0)
+   // trailStyle: ETrailingStyle assigned to the fired position (-1/0/1), or 99
+   // when unknown (e.g. trigger logged with no execution).
+   // signalId: shared id linking this funnel row to its (up to 3) trade rows.
+   void LogSetup(const SVPPipelineState &state, ulong ticket = 0, int trailStyle = 99,
+                 const string signalId = "")
    {
       if (!m_enabled || m_fileHandle == INVALID_HANDLE) return;
       if (!state.primarySetup.isValid) return;
@@ -94,10 +151,12 @@ public:
 
       string line =
          IntegerToString((long)ticket) + d +
+         signalId + d +
          TimeToString(TimeCurrent(), TIME_DATE|TIME_SECONDS) + d +
          m_symbol + d +
          SetupTypeToString(state.primarySetup.setupType) + d +
          (isBuy ? "BUY" : "SELL") + d +
+         IntegerToString(trailStyle) + d +
          IntegerToString((int)state.session) + d +
          // Entry
          DoubleToString(state.primarySetup.entryPrice, 5) + d +
@@ -245,7 +304,27 @@ public:
          DoubleToString(state.smartMoney.mitigationScore, 3) + d +
          DoubleToString(state.smartMoney.breakerBlockScore, 3) + d +
          DoubleToString(state.smartMoney.rejectionBlockScore, 3) + d +
-         DoubleToString(state.smartMoney.zoneQualityScore, 3) + "\n";
+         DoubleToString(state.smartMoney.zoneQualityScore, 3) + d +
+         // ─── Composite features (mirror of data_loader Python composites) ───
+         // bosQuality = bosScore * bosConfirmed * proximity, signed by bosBullish
+         // Uses structDistATR as proximity proxy: prox = clamp(1 - dist/3, 0, 1)
+         _ComputeBosQuality(state) + d +
+         _ComputeChochQuality(state) + d +
+         _ComputeStructAlign(state) + d +
+         // msContext = mean(msSpreadScore, msTickVelocity, msTickImbalance, msLiqVacuum)
+         DoubleToString((state.microstructure.spreadScore + state.microstructure.tickVelocity +
+                         state.microstructure.tickImbalance + state.microstructure.liquidityVacuumScore) / 4.0, 4) + d +
+         // ofContext = mean(ofDeltaProxy, ofCvdProxy, ofAbsorption, ofExhaustion, ofParticipation, ofDivergence)
+         DoubleToString((state.flow.deltaProxy + state.flow.cvdProxy + state.flow.absorptionScore +
+                         state.flow.exhaustionScore + state.flow.participationScore + state.flow.divergenceScore) / 6.0, 4) + d +
+         // liqContext = mean(liqDensity, liqStopCluster, liqEqualHL, liqSessionLiq, liqPremDisc)
+         DoubleToString((state.liquidity.liquidityDensity + state.liquidity.stopClusterScore +
+                         state.liquidity.equalHighLowScore + state.liquidity.sessionLiquidityScore +
+                         state.liquidity.premiumDiscountScore) / 5.0, 4) + d +
+         // smContext = mean(smOrderBlock, smFVG, smMitigation, smBreakerBlock, smRejectionBlock)
+         DoubleToString((state.smartMoney.orderBlockScore + state.smartMoney.fvgScore +
+                         state.smartMoney.mitigationScore + state.smartMoney.breakerBlockScore +
+                         state.smartMoney.rejectionBlockScore) / 5.0, 4) + "\n";
 
       FileWriteString(m_fileHandle, line);
       m_logCount++;

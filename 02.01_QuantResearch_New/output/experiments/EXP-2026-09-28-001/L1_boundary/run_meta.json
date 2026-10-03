@@ -1,0 +1,549 @@
+{
+  "ran_at": "2026-09-28T00:52:59.627951+00:00",
+  "n_dev": 808955,
+  "n_holdout": 346696,
+  "split_time": "2026-04-27 00:14:48",
+  "split_method": "temporal",
+  "split_ratio": 0.7,
+  "n_available": 59,
+  "n_unavailable": 0,
+  "n_total_hypotheses": {
+    "hard_gate": 19352,
+    "soft_gate": 19352,
+    "regime_block": 2296
+  },
+  "warnings": [],
+  "feature_availability": [
+    {
+      "feature": "vpPOC",
+      "category": "vp_core",
+      "present": true,
+      "std": 3.09313566,
+      "na_frac": 0.0,
+      "available": true,
+      "reason": ""
+    },
+    {
+      "feature": "vpVAH",
+      "category": "vp_core",
+      "present": true,
+      "std": 3.18297644,
+      "na_frac": 0.0,
+      "available": true,
+      "reason": ""
+    },
+    {
+      "feature": "vpVAL",
+      "category": "vp_core",
+      "present": true,
+      "std": 3.62995253,
+      "na_frac": 0.0,
+      "available": true,
+      "reason": ""
+    },
+    {
+      "feature": "vpInsideVA",
+      "category": "vp_core",
+      "present": true,
+      "std": 0.50000017,
+      "na_frac": 0.0,
+      "available": true,
+      "reason": ""
+    },
+    {
+      "feature": "vpDistToHVN",
+      "category": "vp_core",
+      "present": true,
+      "std": 0.4852733,
+      "na_frac": 0.0,
+      "available": true,
+      "reason": ""
+    },
+    {
+      "feature": "vpDistToLVN",
+      "category": "vp_core",
+      "present": true,
+      "std": 0.4933754,
+      "na_frac": 0.0,
+      "available": true,
+      "reason": ""
+    },
+    {
+      "feature": "vpPriceVsPOC",
+      "category": "vp_core",
+      "present": true,
+      "std": 1.06385095,
+      "na_frac": 0.0,
+      "available": true,
+      "reason": ""
+    },
+    {
+      "feature": "vpDailyPOC",
+      "category": "vp_core",
+      "present": true,
+      "std": 7.49237897,
+      "na_frac": 0.0,
+      "available": true,
+      "reason": ""
+    },
+    {
+      "feature": "vpCompPOC",
+      "category": "vp_composite",
+      "present": true,
+      "std": 14.74284802,
+      "na_frac": 0.0,
+      "available": true,
+      "reason": ""
+    },
+    {
+      "feature": "vpCompVAH",
+      "category": "vp_composite",
+      "present": true,
+      "std": 11.87725177,
+      "na_frac": 0.0,
+      "available": true,
+      "reason": ""
+    },
+    {
+      "feature": "vpCompVAL",
+      "category": "vp_composite",
+      "present": true,
+      "std": 20.92170834,
+      "na_frac": 0.0,
+      "available": true,
+      "reason": ""
+    },
+    {
+      "feature": "vpCompInsideVA",
+      "category": "vp_composite",
+      "present": true,
+      "std": 0.49936992,
+      "na_frac": 0.0,
+      "available": true,
+      "reason": ""
+    },
+    {
+      "feature": "vpDistCompPOC",
+      "category": "vp_composite",
+      "present": true,
+      "std": 0.08954263,
+      "na_frac": 0.0,
+      "available": true,
+      "reason": ""
+    },
+    {
+      "feature": "vpThinnessRatio",
+      "category": "vp_enhanced",
+      "present": true,
+      "std": 0.12424042,
+      "na_frac": 0.0,
+      "available": true,
+      "reason": ""
+    },
+    {
+      "feature": "vpProfileShape",
+      "category": "vp_enhanced",
+      "present": true,
+      "std": 1.0229952,
+      "na_frac": 0.0,
+      "available": true,
+      "reason": ""
+    },
+    {
+      "feature": "vpBestHVNScore",
+      "category": "vp_enhanced",
+      "present": true,
+      "std": 0.05866866,
+      "na_frac": 0.0,
+      "available": true,
+      "reason": ""
+    },
+    {
+      "feature": "vpVAOverlapRatio",
+      "category": "vp_enhanced",
+      "present": true,
+      "std": 0.25026762,
+      "na_frac": 0.0,
+      "available": true,
+      "reason": ""
+    },
+    {
+      "feature": "vpVAOverlapBias",
+      "category": "vp_enhanced",
+      "present": true,
+      "std": 0.35652103,
+      "na_frac": 0.0,
+      "available": true,
+      "reason": ""
+    },
+    {
+      "feature": "vpDevPOCDir",
+      "category": "vp_enhanced",
+      "present": true,
+      "std": 0.70133212,
+      "na_frac": 0.0,
+      "available": true,
+      "reason": ""
+    },
+    {
+      "feature": "vpDevPOCSlope",
+      "category": "vp_enhanced",
+      "present": true,
+      "std": 0.21980469,
+      "na_frac": 0.0,
+      "available": true,
+      "reason": ""
+    },
+    {
+      "feature": "vpMigrationScore",
+      "category": "vp_enhanced",
+      "present": true,
+      "std": 0.18242923,
+      "na_frac": 0.0,
+      "available": true,
+      "reason": ""
+    },
+    {
+      "feature": "vpUpthrust",
+      "category": "vp_enhanced",
+      "present": true,
+      "std": 0.07045756,
+      "na_frac": 0.0,
+      "available": true,
+      "reason": ""
+    },
+    {
+      "feature": "vpSpring",
+      "category": "vp_enhanced",
+      "present": true,
+      "std": 0.08759235,
+      "na_frac": 0.0,
+      "available": true,
+      "reason": ""
+    },
+    {
+      "feature": "vpMigrationConf",
+      "category": "vp_enhanced",
+      "present": true,
+      "std": 0.22347187,
+      "na_frac": 0.0,
+      "available": true,
+      "reason": ""
+    },
+    {
+      "feature": "auctAcceptance",
+      "category": "auction",
+      "present": true,
+      "std": 0.30769996,
+      "na_frac": 0.0,
+      "available": true,
+      "reason": ""
+    },
+    {
+      "feature": "auctBalance",
+      "category": "auction",
+      "present": true,
+      "std": 0.10807997,
+      "na_frac": 0.0,
+      "available": true,
+      "reason": ""
+    },
+    {
+      "feature": "auctFailure",
+      "category": "auction",
+      "present": true,
+      "std": 0.15428278,
+      "na_frac": 0.0,
+      "available": true,
+      "reason": ""
+    },
+    {
+      "feature": "auctRegime",
+      "category": "auction",
+      "present": true,
+      "std": 1.04589307,
+      "na_frac": 0.0,
+      "available": true,
+      "reason": ""
+    },
+    {
+      "feature": "auctRegimeConf",
+      "category": "auction",
+      "present": true,
+      "std": 0.1213758,
+      "na_frac": 0.0,
+      "available": true,
+      "reason": ""
+    },
+    {
+      "feature": "auctTradeQuality",
+      "category": "auction",
+      "present": true,
+      "std": 0.07019124,
+      "na_frac": 0.0,
+      "available": true,
+      "reason": ""
+    },
+    {
+      "feature": "auctTradeGrade",
+      "category": "auction",
+      "present": true,
+      "std": 0.53165415,
+      "na_frac": 0.0,
+      "available": true,
+      "reason": ""
+    },
+    {
+      "feature": "auctExpReward",
+      "category": "auction",
+      "present": true,
+      "std": 0.4293427,
+      "na_frac": 0.0,
+      "available": true,
+      "reason": ""
+    },
+    {
+      "feature": "auctExpMoveATR",
+      "category": "auction",
+      "present": true,
+      "std": 0.99619581,
+      "na_frac": 0.0,
+      "available": true,
+      "reason": ""
+    },
+    {
+      "feature": "auctTargetProb",
+      "category": "auction",
+      "present": true,
+      "std": 0.06647138,
+      "na_frac": 0.0,
+      "available": true,
+      "reason": ""
+    },
+    {
+      "feature": "auctVAExpRate",
+      "category": "auction",
+      "present": true,
+      "std": 0.18973165,
+      "na_frac": 0.0,
+      "available": true,
+      "reason": ""
+    },
+    {
+      "feature": "auctExhaustion",
+      "category": "auction",
+      "present": true,
+      "std": 0.131884,
+      "na_frac": 0.0,
+      "available": true,
+      "reason": ""
+    },
+    {
+      "feature": "auctContinuation",
+      "category": "auction",
+      "present": true,
+      "std": 0.17733406,
+      "na_frac": 0.0,
+      "available": true,
+      "reason": ""
+    },
+    {
+      "feature": "auctReversalRisk",
+      "category": "auction",
+      "present": true,
+      "std": 0.10449,
+      "na_frac": 0.0,
+      "available": true,
+      "reason": ""
+    },
+    {
+      "feature": "auctHVNStrength",
+      "category": "auction",
+      "present": true,
+      "std": 0.12288812,
+      "na_frac": 0.0,
+      "available": true,
+      "reason": ""
+    },
+    {
+      "feature": "auctLVNStrength",
+      "category": "auction",
+      "present": true,
+      "std": 0.08650636,
+      "na_frac": 0.0,
+      "available": true,
+      "reason": ""
+    },
+    {
+      "feature": "vpLTTransitionScore",
+      "category": "vp_longterm",
+      "present": true,
+      "std": 0.20914069,
+      "na_frac": 0.0,
+      "available": true,
+      "reason": ""
+    },
+    {
+      "feature": "vpLTBalanceStability",
+      "category": "vp_longterm",
+      "present": true,
+      "std": 0.20914069,
+      "na_frac": 0.0,
+      "available": true,
+      "reason": ""
+    },
+    {
+      "feature": "vpLTTrendDuration",
+      "category": "vp_longterm",
+      "present": true,
+      "std": 27.32738789,
+      "na_frac": 0.0,
+      "available": true,
+      "reason": ""
+    },
+    {
+      "feature": "vpLTTrendExhaustion",
+      "category": "vp_longterm",
+      "present": true,
+      "std": 0.49575971,
+      "na_frac": 0.0,
+      "available": true,
+      "reason": ""
+    },
+    {
+      "feature": "vpLTPOCVelocity",
+      "category": "vp_longterm",
+      "present": true,
+      "std": 258925.79032831,
+      "na_frac": 0.0,
+      "available": true,
+      "reason": ""
+    },
+    {
+      "feature": "vpLTPOCMigration",
+      "category": "vp_longterm",
+      "present": true,
+      "std": 1.5938223,
+      "na_frac": 0.0,
+      "available": true,
+      "reason": ""
+    },
+    {
+      "feature": "msCompression",
+      "category": "microstructure",
+      "present": true,
+      "std": 0.23839227,
+      "na_frac": 0.0,
+      "available": true,
+      "reason": ""
+    },
+    {
+      "feature": "msContext",
+      "category": "microstructure",
+      "present": true,
+      "std": 0.11028722,
+      "na_frac": 0.0,
+      "available": true,
+      "reason": ""
+    },
+    {
+      "feature": "ofFlowIntensity",
+      "category": "orderflow",
+      "present": true,
+      "std": 0.08930492,
+      "na_frac": 0.0,
+      "available": true,
+      "reason": ""
+    },
+    {
+      "feature": "ofContext",
+      "category": "orderflow",
+      "present": true,
+      "std": 0.04103529,
+      "na_frac": 0.0,
+      "available": true,
+      "reason": ""
+    },
+    {
+      "feature": "liqSweep",
+      "category": "liquidity",
+      "present": true,
+      "std": 0.14122716,
+      "na_frac": 0.0,
+      "available": true,
+      "reason": ""
+    },
+    {
+      "feature": "liqContext",
+      "category": "liquidity",
+      "present": true,
+      "std": 0.08645195,
+      "na_frac": 0.0,
+      "available": true,
+      "reason": ""
+    },
+    {
+      "feature": "smZoneQuality",
+      "category": "smartmoney",
+      "present": true,
+      "std": 0.17690251,
+      "na_frac": 0.0,
+      "available": true,
+      "reason": ""
+    },
+    {
+      "feature": "smContext",
+      "category": "smartmoney",
+      "present": true,
+      "std": 0.05508566,
+      "na_frac": 0.0,
+      "available": true,
+      "reason": ""
+    },
+    {
+      "feature": "bosQuality",
+      "category": "structure",
+      "present": true,
+      "std": 0.08589245,
+      "na_frac": 0.0,
+      "available": true,
+      "reason": ""
+    },
+    {
+      "feature": "chochQuality",
+      "category": "structure",
+      "present": true,
+      "std": 0.07124183,
+      "na_frac": 0.0,
+      "available": true,
+      "reason": ""
+    },
+    {
+      "feature": "structAlign",
+      "category": "structure",
+      "present": true,
+      "std": 0.05005183,
+      "na_frac": 0.0,
+      "available": true,
+      "reason": ""
+    },
+    {
+      "feature": "atrProxy",
+      "category": "market",
+      "present": true,
+      "std": 13552.2232443,
+      "na_frac": 0.0,
+      "available": true,
+      "reason": ""
+    },
+    {
+      "feature": "spreadToATR",
+      "category": "market",
+      "present": true,
+      "std": 0.17587853,
+      "na_frac": 0.0,
+      "available": true,
+      "reason": ""
+    }
+  ]
+}

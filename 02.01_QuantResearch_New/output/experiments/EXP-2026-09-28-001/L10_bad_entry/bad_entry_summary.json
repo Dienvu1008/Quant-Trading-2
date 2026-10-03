@@ -1,0 +1,25 @@
+{
+  "ran_at": "2026-09-28T00:59:26.352393Z",
+  "canary": {
+    "n_signals": 270557,
+    "n_complete": 267990,
+    "label_counts": {
+      "catastrophic": 151291,
+      "mixed_good": 16939,
+      "bad": 92434,
+      "excellent": 5828,
+      "good": 1498
+    },
+    "n_bad": 243725,
+    "n_good": 7326,
+    "n_neutral": 16939,
+    "bad_rate": 0.909456
+  },
+  "n_bad_features_fdr": 57,
+  "n_bad_features_total": 177,
+  "min_votes": 2,
+  "n_group_filters": 65,
+  "n_global_fallback_features": 57,
+  "filter_confirmed": null,
+  "warnings": []
+}

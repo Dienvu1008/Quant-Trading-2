@@ -1,0 +1,8 @@
+feature,win_top3_freq,lose_top3_freq,total_top3_freq,win_bias
+auctShapeConf,19,18,37,0.5135135134996348
+auctMajorLVN,19,13,32,0.5937499999814454
+ofDeltaProxy,14,14,28,0.49999999998214284
+msCompression,2,8,10,0.19999999998
+auctReversalRisk,1,5,6,0.16666666663888888
+liqEqualHL,4,0,4,0.99999999975
+liqDensity,1,2,3,0.3333333332222222

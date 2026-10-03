@@ -1,0 +1,16 @@
+feature,shape_detected,spearman_r,p_value,shap_range,mean_shap,n
+auctShapeConf,MONO_UP,0.7834,0.0,212.0961,0.0,62
+auctMajorLVN,MONO_UP,0.8368,0.0,64.3938,0.0,62
+ofDeltaProxy,MONO_DOWN,-0.8887,0.0,160.316,0.0,62
+msCompression,SATURATION,0.4513,0.000232,54.6371,0.0,62
+liqEqualHL,MONO_UP,0.9548,0.0,74.5181,-0.0,62
+liqDensity,MONO_UP,0.8664,0.0,0.0,0.0,62
+auctReversalRisk,MONO_UP,0.7274,0.0,91.6856,-0.0,62
+vpDevPOCSlope,MONO_DOWN,-0.8594,0.0,58.5284,-0.0,62
+auctContinuation,MONO_DOWN,-0.8125,0.0,20.7485,-0.0,62
+smZoneQuality,MONO_DOWN,-0.8858,0.0,39.2102,0.0,62
+auctBalance,MONO_DOWN,-0.9127,0.0,34.3625,-0.0,62
+spreadToATR,MONO_UP,0.6663,0.0,61.1929,-0.0,62
+auctProfileShape,MONO_DOWN,-0.9376,0.0,2.8322,-0.0,62
+auctDistLVN,MONO_UP,0.8498,0.0,8.6479,-0.0,62
+liqSessionLiq,MONO_DOWN,-0.8274,0.0,26.1704,0.0,62

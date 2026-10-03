@@ -1,0 +1,16 @@
+feature,shape_detected,spearman_r,p_value,shap_range,mean_shap,n
+spreadPoints,MONO_DOWN,-0.9061,0.0,83.2397,-2.3299,844
+liqStopCluster,MONO_DOWN,-0.7078,0.0,34.343,-3.2216,844
+avgSpread,MONO_DOWN,-0.8444,0.0,29.5487,-0.9821,844
+profilerMigMean,FLAT,-0.401,0.0,149.9057,-0.7187,844
+atrProxy,MONO_DOWN,-0.655,0.0,74.5869,-0.9801,844
+spreadToATR,MONO_DOWN,-0.8745,0.0,43.4224,-1.3868,844
+entryProfilerSamples,MONO_DOWN,-0.6439,0.0,41.093,-0.4823,844
+msCompression,NONLINEAR,-0.122,0.000381,45.8983,-0.7308,844
+vpNearestNakedPOC,FLAT,-0.4529,0.0,64.3326,-0.1622,844
+liqSessionLiq,BAND,-0.1858,0.0,100.2303,-2.661,844
+auctLVNStrength,FLAT,0.314,0.0,48.8501,1.3719,844
+auctReversalRisk,MONO_UP,0.7477,0.0,23.3363,0.9864,844
+liqContext,MONO_UP,0.775,0.0,67.8416,0.0065,844
+auctBalance,NONLINEAR,-0.0845,0.01412,29.8864,-0.86,844
+auctTargetPrice,MONO_UP,0.6739,0.0,70.6961,-0.5013,844

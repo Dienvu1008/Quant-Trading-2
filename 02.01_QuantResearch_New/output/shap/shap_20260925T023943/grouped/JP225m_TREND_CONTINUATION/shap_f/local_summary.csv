@@ -1,0 +1,10 @@
+feature,win_top3_freq,lose_top3_freq,total_top3_freq,win_bias
+auctRegimeConf,20,19,39,0.5128205128073636
+vpLTMajorHVNPrice,12,7,19,0.63157894733518
+spreadToATR,9,9,18,0.4999999999722222
+vpLTTransitionScore,7,7,14,0.49999999996428574
+vpDevPOCSlope,4,7,11,0.36363636360330576
+RR,6,3,9,0.6666666665925925
+structDistATR,0,5,5,0.0
+vpVAOverlapRatio,2,2,4,0.499999999875
+vpLTMajorLVNPrice,0,1,1,0.0

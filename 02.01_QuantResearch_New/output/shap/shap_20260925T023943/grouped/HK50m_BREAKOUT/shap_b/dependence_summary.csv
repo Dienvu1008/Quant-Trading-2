@@ -1,0 +1,16 @@
+feature,shape_detected,spearman_r,p_value,shap_range,mean_shap,n
+smFVG,MONO_UP,0.7956,0.0,1.0028,-0.0,65
+spreadToATR,MONO_DOWN,-0.7479,0.0,2.6361,-0.0,65
+vpBestHVNScore,MONO_UP,0.8894,0.0,1.3187,-0.0,65
+vpLTTransitionScore,FLAT,0.4672,8.7e-05,2.9183,-0.0,65
+msTickImbalance,MONO_DOWN,-0.8173,0.0,3.196,-0.0,65
+entryVpThinnessRatio,MONO_UP,0.6207,0.0,2.5198,-0.0,65
+atrProxy,MONO_DOWN,-0.7487,0.0,2.1293,-0.0,65
+thesis,MONO_DOWN,-0.8045,0.0,1.8186,-0.0,65
+auctHVNStrength,MONO_UP,0.5921,0.0,2.2235,-0.0,65
+RR,MONO_UP,0.7082,0.0,1.3622,-0.0,65
+profilerMigMean,MONO_DOWN,-0.6847,0.0,0.6604,-0.0,65
+vpLTPOC10d,MONO_UP,0.7313,0.0,0.9905,0.0,65
+smMitigation,MONO_DOWN,-0.8162,0.0,1.7941,-0.0,65
+vpVAOverlapRatio,MONO_DOWN,-0.5842,0.0,1.4445,-0.0,65
+auctExhaustion,MONO_UP,0.7639,0.0,0.8401,0.0,65

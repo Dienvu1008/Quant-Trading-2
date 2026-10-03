@@ -1,0 +1,8 @@
+feature,win_top3_freq,lose_top3_freq,total_top3_freq,win_bias
+vpBestHVN,19,20,39,0.48717948716699544
+msContext,19,19,38,0.49999999998684214
+auctHVNStrength,9,12,21,0.42857142855102043
+entryVpDevPOCDir,10,5,15,0.6666666666222222
+auctExpMoveATR,1,2,3,0.3333333332222222
+vpDistNakedPOC_ATR,0,2,2,0.0
+auctExhaustion,2,0,2,0.9999999995

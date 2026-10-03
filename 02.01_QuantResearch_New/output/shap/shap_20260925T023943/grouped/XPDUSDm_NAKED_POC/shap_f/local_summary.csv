@@ -1,0 +1,12 @@
+feature,win_top3_freq,lose_top3_freq,total_top3_freq,win_bias
+avgSpread,19,16,35,0.5428571428416327
+spreadPoints,18,17,35,0.5142857142710204
+entryProfilerSamples,10,17,27,0.37037037035665293
+TP,3,4,7,0.4285714285102041
+vpLTTrendDuration,4,1,5,0.79999999984
+vpLTPOC60d,3,1,4,0.7499999998125
+atrProxy,0,2,2,0.0
+entryLTNearestZoneStrength,1,1,2,0.49999999975
+vpLTAcceptanceAtPrice,1,0,1,0.9999999989999999
+vpLTNearestZonePrice,1,0,1,0.9999999989999999
+profilerMigMean,0,1,1,0.0

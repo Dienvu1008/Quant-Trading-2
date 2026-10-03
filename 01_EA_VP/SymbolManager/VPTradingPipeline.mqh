@@ -60,12 +60,14 @@
 struct SVPPosition
 {
    ulong    ticket;
+   string   signalId;        // shared by all fan-out positions from the SAME signal
    bool     isBuy;
    double   entryPrice;
    ESetupType setupType;
    datetime entryTime;
    double   thesis;
    double   riskReward;
+   int      trailingStyle;   // ETrailingStyle applied to THIS position (-1/0/1)
    // VP Core at entry
    double   vpPOC, vpVAH, vpVAL;
    bool     vpInsideVA;
@@ -92,9 +94,29 @@ struct SVPPosition
    // Profiler at entry
    EVPSymbolArchetype archetype;
    int      profilerSamples;
+   // MAE/MFE tracking — updated every tick while position is open
+   double   worstPrice;   // lowest bid seen (buy) / highest ask seen (sell) → MAE
+   double   bestPrice;    // highest bid seen (buy) / lowest ask seen (sell)  → MFE
+   double   atrAtEntry;   // atrProxy snapshot at entry — used to normalise MAE/MFE
+   // Staleness counter: incremented each tick that PositionSelectByTicket fails.
+   // Entry is only evicted from m_positions[] once this reaches the eviction
+   // threshold, giving OnTradeClosed() time to run first and capture signalId.
+   int      staleTicks;
 };
 
-#define VP_MAX_POSITIONS 10
+// Raised from 64: DataCollect fires 3 positions per signal with no position cap.
+// 2000 covers the realistic peak of simultaneous open positions across all symbols
+// in a DataCollect backtest (~667 signals open at once × 3 styles). The array is
+// static so trades beyond this still close correctly via the fallback path in
+// OnTradeClosed, but they will lack signalId. Increase further if diagnostics show
+// a large fraction of trades falling through to the untracked branch.
+#define VP_MAX_POSITIONS 2000
+// How many consecutive ticks a position can fail PositionSelectByTicket before
+// ManagePositions evicts it as orphaned. This must be large enough that
+// OnTradeClosed() (triggered by OnTradeTransaction) has time to run first and
+// copy signalId into the trade record. In both live and backtests, OnTradeTransaction
+// fires in the same tick or the very next tick, so 5 is a safe margin.
+#define VP_STALE_EVICT_TICKS 5
 
 class CVPTradingPipeline
 {
@@ -115,8 +137,19 @@ private:
    CSimpleSwingDetector   m_swingDetector;
    CSimpleBOS             m_bos;
    CSimpleCHOCH           m_choch;
-   CAuctionTrailingStopEngine m_trailing;
+   // One trailing engine per style so the DataCollect fan-out keeps independent
+   // trailing state (smoothing, last-issued stop, throttle) per style instead of
+   // clobbering a single shared engine. Index: 0=Conservative, 1=Expansion.
+   CAuctionTrailingStopEngine m_trailing[2];
    CAuctionThesisManager  m_thesis;
+
+   // Map ETrailingStyle (0 conservative, 1 expansion) to the engine index. Style
+   // -1 (disabled) never reaches an engine.
+   CAuctionTrailingStopEngine* TrailEngine(int style)
+   {
+      int idx = (style == (int)TRAIL_STYLE_EXPANSION) ? 1 : 0;
+      return GetPointer(m_trailing[idx]);
+   }
 
    // Triggers
    CSimpleBreakoutTrigger          m_trigBreakout;
@@ -263,10 +296,31 @@ private:
       m_engRejectionBlock.Execute(m_state);
    }
 
-   ulong ExecuteSetup(void)
+   // Build a signal id shared by all positions of one signal:
+   //   <symbol>_<YYYYMMDDHHMMSS>_<setupTypeInt>
+   // The 3 DataCollect fan-out positions fire on the same tick, so they share the
+   // same TimeCurrent() and thus the same id; the funnel row logs the same id.
+   string MakeSignalId(ESetupType setupType)
+   {
+      MqlDateTime dt;
+      TimeToStruct(TimeCurrent(), dt);
+      string ts = StringFormat("%04d%02d%02d%02d%02d%02d",
+                               dt.year, dt.mon, dt.day, dt.hour, dt.min, dt.sec);
+      return m_symbol + "_" + ts + "_" + IntegerToString((int)setupType);
+   }
+
+   // trailStyle: ETrailingStyle for this position. In DataCollect fan-out this
+   // is one of -1/0/1; in Live it is m_config.trailingStyle.
+   // signalId: shared identifier for all positions fired from the same signal,
+   // so the research pipeline can join one funnel row to its (up to 3) trades.
+   ulong ExecuteSetup(int trailStyle, const string signalId)
    {
       if (!m_state.primarySetup.isValid) return 0;
-      if (CountMyPositions() >= m_config.maxPositionsPerSymbol) return 0;
+      // DataCollect fires up to 3 positions per signal (one per trailing style),
+      // so the per-symbol cap is bypassed in that mode; Live still respects it.
+      if (m_config.presetMode != RUN_MODE_DATACOLLECT
+          && CountMyPositions() >= m_config.maxPositionsPerSymbol)
+         return 0;
 
       // Check if symbol allows new positions
       ENUM_SYMBOL_TRADE_MODE tradeMode = (ENUM_SYMBOL_TRADE_MODE)SymbolInfoInteger(m_symbol, SYMBOL_TRADE_MODE);
@@ -322,7 +376,10 @@ private:
       req.tp = m_state.primarySetup.takeProfit;
       req.deviation = 30;
       req.magic = m_config.magicNumber;
-      req.comment = "VP_" + SetupTypeToString(m_state.primarySetup.setupType);
+      // Encode trailing style into the comment (VP_<setup>_T<style>) so the close
+      // handler can recover it even if the position is no longer tracked in RAM.
+      req.comment = "VP_" + SetupTypeToString(m_state.primarySetup.setupType)
+                    + "_T" + IntegerToString(trailStyle);
       req.type_filling = ORDER_FILLING_IOC;
 
       if (!OrderSend(req, res) || res.retcode != 10009)
@@ -364,8 +421,11 @@ private:
          m_positions[idx].entryPrice = req.price;
          m_positions[idx].setupType = m_state.primarySetup.setupType;
          m_positions[idx].entryTime = TimeCurrent();
+         m_positions[idx].signalId = signalId;
          m_positions[idx].thesis = m_state.winProbability;
          m_positions[idx].riskReward = m_state.primarySetup.riskReward;
+         m_positions[idx].trailingStyle = trailStyle;
+         m_positions[idx].staleTicks = 0;
          // VP Core
          m_positions[idx].vpPOC = m_state.vpPOC;
          m_positions[idx].vpVAH = m_state.vpVAH;
@@ -404,6 +464,12 @@ private:
          // Profiler
          m_positions[idx].archetype = m_state.profiler.archetype;
          m_positions[idx].profilerSamples = m_state.profiler.samplesCollected;
+
+         // MAE/MFE: initialise extreme-price trackers at entry price
+         m_positions[idx].worstPrice  = req.price;
+         m_positions[idx].bestPrice   = req.price;
+         m_positions[idx].atrAtEntry  = m_state.marketData.atrProxy;
+         m_positions[idx].staleTicks  = 0;
       }
       return posTicket;
    }
@@ -420,15 +486,40 @@ private:
       {
          if (!PositionSelectByTicket(m_positions[i].ticket))
          {
-            m_positions[i] = m_positions[m_posCount - 1];
-            m_posCount--;
+            // The position is no longer selectable — it has been closed. Do NOT
+            // remove the entry immediately: OnTradeClosed() (fired by
+            // OnTradeTransaction) has not run yet and needs this entry to copy
+            // signalId/trailingStyle into the trade record.  Instead, increment
+            // a staleness counter and only evict once it reaches the threshold.
+            // This gives OnTradeTransaction at least VP_STALE_EVICT_TICKS ticks
+            // to fire before we treat the entry as truly orphaned.
+            m_positions[i].staleTicks++;
+            if (m_positions[i].staleTicks >= VP_STALE_EVICT_TICKS)
+            {
+               m_positions[i] = m_positions[m_posCount - 1];
+               m_posCount--;
+            }
             continue;
          }
+         // Position is still live — reset any staleness from a previous miss.
+         m_positions[i].staleTicks = 0;
 
          double curPrice = PositionGetDouble(POSITION_PRICE_CURRENT);
          double openPrice = PositionGetDouble(POSITION_PRICE_OPEN);
          bool isBuy = m_positions[i].isBuy;
          double profit = isBuy ? (curPrice - openPrice) : (openPrice - curPrice);
+
+         // ── MAE/MFE tracking: update extreme prices while position is live ──
+         // For a BUY: MAE = lowest bid (adverse), MFE = highest bid (favourable).
+         // For a SELL: MAE = highest ask (adverse), MFE = lowest ask (favourable).
+         // We use the current execution price as a proxy (curPrice from MT5).
+         if (isBuy) {
+            if (curPrice < m_positions[i].worstPrice) m_positions[i].worstPrice = curPrice;
+            if (curPrice > m_positions[i].bestPrice)  m_positions[i].bestPrice  = curPrice;
+         } else {
+            if (curPrice > m_positions[i].worstPrice) m_positions[i].worstPrice = curPrice;
+            if (curPrice < m_positions[i].bestPrice)  m_positions[i].bestPrice  = curPrice;
+         }
 
          // Thesis check
          SThesisOutput thesisOut = m_thesis.Evaluate(m_state, profit, atrPrice);
@@ -451,10 +542,17 @@ private:
             continue;
          }
 
-         // Trailing stop (only when not disabled)
+         // Trailing stop — driven by THIS position's own style (set at entry),
+         // not the global config, so the DataCollect fan-out trails each of its
+         // 3 positions differently (-1=off, 0=conservative, 1=expansion).
          double currentSL = PositionGetDouble(POSITION_SL);
-         if (m_config.trailingStyle != (int)TRAIL_STYLE_DISABLED)
+         int posTrailStyle = m_positions[i].trailingStyle;
+         if (posTrailStyle != (int)TRAIL_STYLE_DISABLED)
          {
+         CAuctionTrailingStopEngine *eng = TrailEngine(posTrailStyle);
+         eng.SetTrailingStyle((ETrailingStyle)posTrailStyle);
+         eng.SetMinUpdateSeconds(m_config.trailMinUpdateSecs);
+
          STrailingContext ctx;
          ctx.bid = realBid; ctx.ask = realAsk; ctx.isBuy = isBuy;
          ctx.entryPrice = openPrice; ctx.currentSL = currentSL;
@@ -463,7 +561,7 @@ private:
          ctx.pointSize = m_state.marketData.pointSize;
          ctx.isRunnerPosition = false;
 
-         STrailingDecision decision = m_trailing.Evaluate(ctx, m_state);
+         STrailingDecision decision = eng.Evaluate(ctx, m_state);
          if (decision.shouldExitImmediately)
          {
             MqlTradeRequest req; MqlTradeResult res;
@@ -523,8 +621,14 @@ public:
       m_swingDetector.Bootstrap(symbol, 3);
       m_bos.Bootstrap(symbol);
       m_choch.Bootstrap(symbol);
-      m_trailing.Reset();
-      m_trailing.SetTrailingStyle((ETrailingStyle)config.trailingStyle);
+      // Both trailing engines (conservative + expansion). Per-position style is
+      // applied in ManagePositions; here we just reset state and set the throttle.
+      m_trailing[0].Reset();
+      m_trailing[0].SetTrailingStyle(TRAIL_STYLE_CONSERVATIVE);
+      m_trailing[0].SetMinUpdateSeconds(config.trailMinUpdateSecs);
+      m_trailing[1].Reset();
+      m_trailing[1].SetTrailingStyle(TRAIL_STYLE_EXPANSION);
+      m_trailing[1].SetMinUpdateSeconds(config.trailMinUpdateSecs);
       m_thesis.Reset();
 
       m_trigBreakout.Bootstrap(symbol);
@@ -711,19 +815,72 @@ public:
             m_state.statusMessage = "edgeguard_regime_blocked";
          }
 
-         // 4. Feature gates (Phase 02) — check key VP/Auction features
+         // 4. Feature gates (Phase 02) — ALL features from VPEdgeGuardConfig
          if (m_state.primarySetup.isValid)
          {
+            double spreadToATR4 = (m_state.marketData.atrProxy > 0)
+                                   ? m_state.marketData.spreadPoints / m_state.marketData.atrProxy : 0.0;
             double mult = 1.0;
-            mult = MathMin(mult, VPGetEdgeMultiplier(m_symbol, setupName, "auctTradeQuality", m_state.auctTradeQuality));
-            mult = MathMin(mult, VPGetEdgeMultiplier(m_symbol, setupName, "vpMigrationConf", m_state.vpMigrationConfidence));
-            mult = MathMin(mult, VPGetEdgeMultiplier(m_symbol, setupName, "auctBalance", m_state.auctBalanceScore));
-            mult = MathMin(mult, VPGetEdgeMultiplier(m_symbol, setupName, "auctContinuation", m_state.auctContinuationScore));
-            mult = MathMin(mult, VPGetEdgeMultiplier(m_symbol, setupName, "auctFailure", m_state.auctFailureScore));
-            mult = MathMin(mult, VPGetEdgeMultiplier(m_symbol, setupName, "auctReversalRisk", m_state.auctReversalRiskScore));
-            mult = MathMin(mult, VPGetEdgeMultiplier(m_symbol, setupName, "bosScore", m_state.bosScore));
-            mult = MathMin(mult, VPGetEdgeMultiplier(m_symbol, setupName, "spreadToATR",
-                     m_state.marketData.atrProxy > 0 ? m_state.marketData.spreadPoints / m_state.marketData.atrProxy : 0));
+            // ── VP core ──
+            mult = MathMin(mult, VPGetEdgeMultiplier(m_symbol, setupName, "vpPOC",              m_state.vpPOC));
+            mult = MathMin(mult, VPGetEdgeMultiplier(m_symbol, setupName, "vpVAH",              m_state.vpVAH));
+            mult = MathMin(mult, VPGetEdgeMultiplier(m_symbol, setupName, "vpVAL",              m_state.vpVAL));
+            mult = MathMin(mult, VPGetEdgeMultiplier(m_symbol, setupName, "vpInsideVA",         m_state.vpInsideVA ? 1.0 : 0.0));
+            mult = MathMin(mult, VPGetEdgeMultiplier(m_symbol, setupName, "vpDistToHVN",        m_state.vpDistToHVN_ATR));
+            mult = MathMin(mult, VPGetEdgeMultiplier(m_symbol, setupName, "vpDistToLVN",        m_state.vpDistToLVN_ATR));
+            mult = MathMin(mult, VPGetEdgeMultiplier(m_symbol, setupName, "vpBestHVNScore",     m_state.vpBestHVNScore));
+            mult = MathMin(mult, VPGetEdgeMultiplier(m_symbol, setupName, "vpThinnessRatio",    m_state.vpThinnessRatio));
+            mult = MathMin(mult, VPGetEdgeMultiplier(m_symbol, setupName, "vpMigrationScore",   m_state.vpMigrationScore));
+            mult = MathMin(mult, VPGetEdgeMultiplier(m_symbol, setupName, "vpMigrationConf",    m_state.vpMigrationConfidence));
+            mult = MathMin(mult, VPGetEdgeMultiplier(m_symbol, setupName, "vpPriceVsPOC",       m_state.vpPriceVsPOC));
+            mult = MathMin(mult, VPGetEdgeMultiplier(m_symbol, setupName, "vpDevPOCDir",        m_state.vpDevPOCDirection));
+            mult = MathMin(mult, VPGetEdgeMultiplier(m_symbol, setupName, "vpDevPOCSlope",      m_state.vpDevPOCSlope));
+            mult = MathMin(mult, VPGetEdgeMultiplier(m_symbol, setupName, "vpDailyPOC",         m_state.vpDailyPOC));
+            mult = MathMin(mult, VPGetEdgeMultiplier(m_symbol, setupName, "vpDistCompPOC",      m_state.vpDistToCompositePOC_ATR));
+            mult = MathMin(mult, VPGetEdgeMultiplier(m_symbol, setupName, "vpCompPOC",          m_state.vpCompositePOC));
+            mult = MathMin(mult, VPGetEdgeMultiplier(m_symbol, setupName, "vpCompVAH",          m_state.vpCompositeVAH));
+            mult = MathMin(mult, VPGetEdgeMultiplier(m_symbol, setupName, "vpCompVAL",          m_state.vpCompositeVAL));
+            mult = MathMin(mult, VPGetEdgeMultiplier(m_symbol, setupName, "vpCompInsideVA",     m_state.vpCompositeInsideVA ? 1.0 : 0.0));
+            // ── Long-term VP ──
+            mult = MathMin(mult, VPGetEdgeMultiplier(m_symbol, setupName, "vpLTPOCVelocity",       m_state.vpLTPOCVelocity));
+            mult = MathMin(mult, VPGetEdgeMultiplier(m_symbol, setupName, "vpLTPOCMigration",      (double)m_state.vpLTPOCMigration));
+            mult = MathMin(mult, VPGetEdgeMultiplier(m_symbol, setupName, "vpLTTransitionScore",   m_state.vpLTTransitionScore));
+            mult = MathMin(mult, VPGetEdgeMultiplier(m_symbol, setupName, "vpLTBalanceStability",  m_state.vpLTBalanceStability));
+            mult = MathMin(mult, VPGetEdgeMultiplier(m_symbol, setupName, "vpLTTrendDuration",     m_state.vpLTTrendDuration));
+            mult = MathMin(mult, VPGetEdgeMultiplier(m_symbol, setupName, "vpLTTrendExhaustion",   m_state.vpLTTrendExhaustion));
+            // ── Auction intelligence ──
+            mult = MathMin(mult, VPGetEdgeMultiplier(m_symbol, setupName, "auctRegimeConf",     m_state.auctRegimeConfidence));
+            mult = MathMin(mult, VPGetEdgeMultiplier(m_symbol, setupName, "auctBalance",        m_state.auctBalanceScore));
+            mult = MathMin(mult, VPGetEdgeMultiplier(m_symbol, setupName, "auctFailure",        m_state.auctFailureScore));
+            mult = MathMin(mult, VPGetEdgeMultiplier(m_symbol, setupName, "auctTradeQuality",   m_state.auctTradeQuality));
+            mult = MathMin(mult, VPGetEdgeMultiplier(m_symbol, setupName, "auctTradeGrade",     (double)m_state.auctTradeGrade));
+            mult = MathMin(mult, VPGetEdgeMultiplier(m_symbol, setupName, "auctTargetProb",     m_state.auctTargetProbability));
+            mult = MathMin(mult, VPGetEdgeMultiplier(m_symbol, setupName, "auctAcceptance",     m_state.auctAcceptanceScore));
+            mult = MathMin(mult, VPGetEdgeMultiplier(m_symbol, setupName, "auctContinuation",   m_state.auctContinuationScore));
+            mult = MathMin(mult, VPGetEdgeMultiplier(m_symbol, setupName, "auctReversalRisk",   m_state.auctReversalRiskScore));
+            mult = MathMin(mult, VPGetEdgeMultiplier(m_symbol, setupName, "auctExhaustion",     m_state.auctExhaustionScore));
+            mult = MathMin(mult, VPGetEdgeMultiplier(m_symbol, setupName, "auctExpReward",      m_state.auctExpectedReward));
+            mult = MathMin(mult, VPGetEdgeMultiplier(m_symbol, setupName, "auctExpMoveATR",     m_state.auctExpectedMoveATR));
+            mult = MathMin(mult, VPGetEdgeMultiplier(m_symbol, setupName, "auctHVNStrength",    m_state.auctHVNClusterStrength));
+            mult = MathMin(mult, VPGetEdgeMultiplier(m_symbol, setupName, "auctVAExpRate",      m_state.auctVAExpansionRate));
+            // ── Structure ──
+            mult = MathMin(mult, VPGetEdgeMultiplier(m_symbol, setupName, "bosScore",           m_state.bosScore));
+            // ── Bonus engines ──
+            mult = MathMin(mult, VPGetEdgeMultiplier(m_symbol, setupName, "msCompression",      m_state.microstructure.compressionScore));
+            mult = MathMin(mult, VPGetEdgeMultiplier(m_symbol, setupName, "ofFlowIntensity",    m_state.flow.flowIntensityScore));
+            mult = MathMin(mult, VPGetEdgeMultiplier(m_symbol, setupName, "liqSweep",           m_state.liquidity.sweepScore));
+            mult = MathMin(mult, VPGetEdgeMultiplier(m_symbol, setupName, "smZoneQuality",      m_state.smartMoney.zoneQualityScore));
+            // ── Composite features (VPFunnelLogger v2+) ──
+            mult = MathMin(mult, VPGetEdgeMultiplier(m_symbol, setupName, "bosQuality",         m_state.bosScore));
+            mult = MathMin(mult, VPGetEdgeMultiplier(m_symbol, setupName, "chochQuality",       m_state.chochScore));
+            mult = MathMin(mult, VPGetEdgeMultiplier(m_symbol, setupName, "structAlign",        (m_state.trendDirection == (m_state.bosBullish ? 1 : -1)) ? 1.0 : 0.0));
+            mult = MathMin(mult, VPGetEdgeMultiplier(m_symbol, setupName, "msContext",          m_state.microstructure.compressionScore));
+            mult = MathMin(mult, VPGetEdgeMultiplier(m_symbol, setupName, "ofContext",          m_state.flow.flowIntensityScore));
+            mult = MathMin(mult, VPGetEdgeMultiplier(m_symbol, setupName, "liqContext",         m_state.liquidity.sweepScore));
+            mult = MathMin(mult, VPGetEdgeMultiplier(m_symbol, setupName, "smContext",          m_state.smartMoney.zoneQualityScore));
+            // ── Market conditions ──
+            mult = MathMin(mult, VPGetEdgeMultiplier(m_symbol, setupName, "atrProxy",           m_state.marketData.atrProxy));
+            mult = MathMin(mult, VPGetEdgeMultiplier(m_symbol, setupName, "spreadToATR",        spreadToATR4));
 
             if (mult <= 0.0)
             {
@@ -732,24 +889,208 @@ public:
             }
          }
 
-         // 5. SL risk multiplier (Phase 05) — reduce lot, don't block
+         // 5. Soft tilt (Phase 04) — adjust winProbability, does NOT block
          if (m_state.primarySetup.isValid)
          {
+            double spreadToATR5 = (m_state.marketData.atrProxy > 0)
+                                   ? m_state.marketData.spreadPoints / m_state.marketData.atrProxy : 0.0;
+            double tilt = 1.0;
+            // ── VP core ──
+            tilt = MathMin(tilt, VPGetEdgeTiltMultiplier(m_symbol, setupName, "vpPOC",              m_state.vpPOC));
+            tilt = MathMin(tilt, VPGetEdgeTiltMultiplier(m_symbol, setupName, "vpVAH",              m_state.vpVAH));
+            tilt = MathMin(tilt, VPGetEdgeTiltMultiplier(m_symbol, setupName, "vpVAL",              m_state.vpVAL));
+            tilt = MathMin(tilt, VPGetEdgeTiltMultiplier(m_symbol, setupName, "vpInsideVA",         m_state.vpInsideVA ? 1.0 : 0.0));
+            tilt = MathMin(tilt, VPGetEdgeTiltMultiplier(m_symbol, setupName, "vpDistToHVN",        m_state.vpDistToHVN_ATR));
+            tilt = MathMin(tilt, VPGetEdgeTiltMultiplier(m_symbol, setupName, "vpDistToLVN",        m_state.vpDistToLVN_ATR));
+            tilt = MathMin(tilt, VPGetEdgeTiltMultiplier(m_symbol, setupName, "vpBestHVNScore",     m_state.vpBestHVNScore));
+            tilt = MathMin(tilt, VPGetEdgeTiltMultiplier(m_symbol, setupName, "vpThinnessRatio",    m_state.vpThinnessRatio));
+            tilt = MathMin(tilt, VPGetEdgeTiltMultiplier(m_symbol, setupName, "vpMigrationScore",   m_state.vpMigrationScore));
+            tilt = MathMin(tilt, VPGetEdgeTiltMultiplier(m_symbol, setupName, "vpMigrationConf",    m_state.vpMigrationConfidence));
+            tilt = MathMin(tilt, VPGetEdgeTiltMultiplier(m_symbol, setupName, "vpPriceVsPOC",       m_state.vpPriceVsPOC));
+            tilt = MathMin(tilt, VPGetEdgeTiltMultiplier(m_symbol, setupName, "vpDevPOCDir",        m_state.vpDevPOCDirection));
+            tilt = MathMin(tilt, VPGetEdgeTiltMultiplier(m_symbol, setupName, "vpDevPOCSlope",      m_state.vpDevPOCSlope));
+            tilt = MathMin(tilt, VPGetEdgeTiltMultiplier(m_symbol, setupName, "vpDailyPOC",         m_state.vpDailyPOC));
+            tilt = MathMin(tilt, VPGetEdgeTiltMultiplier(m_symbol, setupName, "vpDistCompPOC",      m_state.vpDistToCompositePOC_ATR));
+            tilt = MathMin(tilt, VPGetEdgeTiltMultiplier(m_symbol, setupName, "vpCompPOC",          m_state.vpCompositePOC));
+            tilt = MathMin(tilt, VPGetEdgeTiltMultiplier(m_symbol, setupName, "vpCompVAH",          m_state.vpCompositeVAH));
+            tilt = MathMin(tilt, VPGetEdgeTiltMultiplier(m_symbol, setupName, "vpCompVAL",          m_state.vpCompositeVAL));
+            tilt = MathMin(tilt, VPGetEdgeTiltMultiplier(m_symbol, setupName, "vpLTPOCVelocity",    m_state.vpLTPOCVelocity));
+            tilt = MathMin(tilt, VPGetEdgeTiltMultiplier(m_symbol, setupName, "vpLTPOCMigration",   (double)m_state.vpLTPOCMigration));
+            tilt = MathMin(tilt, VPGetEdgeTiltMultiplier(m_symbol, setupName, "vpLTTransitionScore",m_state.vpLTTransitionScore));
+            tilt = MathMin(tilt, VPGetEdgeTiltMultiplier(m_symbol, setupName, "vpLTBalanceStability",m_state.vpLTBalanceStability));
+            tilt = MathMin(tilt, VPGetEdgeTiltMultiplier(m_symbol, setupName, "vpLTTrendDuration",  m_state.vpLTTrendDuration));
+            tilt = MathMin(tilt, VPGetEdgeTiltMultiplier(m_symbol, setupName, "vpLTTrendExhaustion",m_state.vpLTTrendExhaustion));
+            // ── Auction ──
+            tilt = MathMin(tilt, VPGetEdgeTiltMultiplier(m_symbol, setupName, "auctRegimeConf",     m_state.auctRegimeConfidence));
+            tilt = MathMin(tilt, VPGetEdgeTiltMultiplier(m_symbol, setupName, "auctBalance",        m_state.auctBalanceScore));
+            tilt = MathMin(tilt, VPGetEdgeTiltMultiplier(m_symbol, setupName, "auctFailure",        m_state.auctFailureScore));
+            tilt = MathMin(tilt, VPGetEdgeTiltMultiplier(m_symbol, setupName, "auctTradeQuality",   m_state.auctTradeQuality));
+            tilt = MathMin(tilt, VPGetEdgeTiltMultiplier(m_symbol, setupName, "auctTradeGrade",     (double)m_state.auctTradeGrade));
+            tilt = MathMin(tilt, VPGetEdgeTiltMultiplier(m_symbol, setupName, "auctTargetProb",     m_state.auctTargetProbability));
+            tilt = MathMin(tilt, VPGetEdgeTiltMultiplier(m_symbol, setupName, "auctAcceptance",     m_state.auctAcceptanceScore));
+            tilt = MathMin(tilt, VPGetEdgeTiltMultiplier(m_symbol, setupName, "auctContinuation",   m_state.auctContinuationScore));
+            tilt = MathMin(tilt, VPGetEdgeTiltMultiplier(m_symbol, setupName, "auctReversalRisk",   m_state.auctReversalRiskScore));
+            tilt = MathMin(tilt, VPGetEdgeTiltMultiplier(m_symbol, setupName, "auctExhaustion",     m_state.auctExhaustionScore));
+            tilt = MathMin(tilt, VPGetEdgeTiltMultiplier(m_symbol, setupName, "auctExpReward",      m_state.auctExpectedReward));
+            tilt = MathMin(tilt, VPGetEdgeTiltMultiplier(m_symbol, setupName, "auctExpMoveATR",     m_state.auctExpectedMoveATR));
+            tilt = MathMin(tilt, VPGetEdgeTiltMultiplier(m_symbol, setupName, "auctHVNStrength",    m_state.auctHVNClusterStrength));
+            tilt = MathMin(tilt, VPGetEdgeTiltMultiplier(m_symbol, setupName, "auctVAExpRate",      m_state.auctVAExpansionRate));
+            // ── Structure / bonus engines ──
+            tilt = MathMin(tilt, VPGetEdgeTiltMultiplier(m_symbol, setupName, "bosScore",           m_state.bosScore));
+            tilt = MathMin(tilt, VPGetEdgeTiltMultiplier(m_symbol, setupName, "msCompression",      m_state.microstructure.compressionScore));
+            tilt = MathMin(tilt, VPGetEdgeTiltMultiplier(m_symbol, setupName, "ofFlowIntensity",    m_state.flow.flowIntensityScore));
+            tilt = MathMin(tilt, VPGetEdgeTiltMultiplier(m_symbol, setupName, "liqSweep",           m_state.liquidity.sweepScore));
+            tilt = MathMin(tilt, VPGetEdgeTiltMultiplier(m_symbol, setupName, "smZoneQuality",      m_state.smartMoney.zoneQualityScore));
+            // ── Composite features ──
+            tilt = MathMin(tilt, VPGetEdgeTiltMultiplier(m_symbol, setupName, "bosQuality",         m_state.bosScore));
+            tilt = MathMin(tilt, VPGetEdgeTiltMultiplier(m_symbol, setupName, "chochQuality",       m_state.chochScore));
+            tilt = MathMin(tilt, VPGetEdgeTiltMultiplier(m_symbol, setupName, "structAlign",        (m_state.trendDirection == (m_state.bosBullish ? 1 : -1)) ? 1.0 : 0.0));
+            tilt = MathMin(tilt, VPGetEdgeTiltMultiplier(m_symbol, setupName, "msContext",          m_state.microstructure.compressionScore));
+            tilt = MathMin(tilt, VPGetEdgeTiltMultiplier(m_symbol, setupName, "ofContext",          m_state.flow.flowIntensityScore));
+            tilt = MathMin(tilt, VPGetEdgeTiltMultiplier(m_symbol, setupName, "liqContext",         m_state.liquidity.sweepScore));
+            tilt = MathMin(tilt, VPGetEdgeTiltMultiplier(m_symbol, setupName, "smContext",          m_state.smartMoney.zoneQualityScore));
+            // ── Market conditions ──
+            tilt = MathMin(tilt, VPGetEdgeTiltMultiplier(m_symbol, setupName, "atrProxy",           m_state.marketData.atrProxy));
+            tilt = MathMin(tilt, VPGetEdgeTiltMultiplier(m_symbol, setupName, "spreadToATR",        spreadToATR5));
+            // Apply tilt: scales winProbability (informational, used by lot sizing if enabled)
+            m_state.winProbability *= tilt;
+            // Block trade if cumulative tilt is below minimum threshold
+            if (m_config.minTiltThreshold > 0.0 && tilt < m_config.minTiltThreshold)
+            {
+               m_state.primarySetup.isValid = false;
+               m_state.statusMessage = "edgeguard_tilt_below_threshold";
+            }
+         }
+
+         // 5b. SHAP-guided tilts (experimental — NOT FDR validated)
+         // Applies VPGetSHAPTilt() per feature, scales winProbability further.
+         // These are raw SHAP findings — used for research observation only.
+         if (m_state.primarySetup.isValid)
+         {
+            double spreadToATR5b = (m_state.marketData.atrProxy > 0)
+                                   ? m_state.marketData.spreadPoints / m_state.marketData.atrProxy : 0.0;
+            double shapTilt = 1.0;
+            shapTilt = MathMin(shapTilt, VPGetSHAPTilt(m_symbol, setupName, "vpPOC",             m_state.vpPOC));
+            shapTilt = MathMin(shapTilt, VPGetSHAPTilt(m_symbol, setupName, "vpVAH",             m_state.vpVAH));
+            shapTilt = MathMin(shapTilt, VPGetSHAPTilt(m_symbol, setupName, "vpVAL",             m_state.vpVAL));
+            shapTilt = MathMin(shapTilt, VPGetSHAPTilt(m_symbol, setupName, "vpDistToHVN",       m_state.vpDistToHVN_ATR));
+            shapTilt = MathMin(shapTilt, VPGetSHAPTilt(m_symbol, setupName, "vpDistToLVN",       m_state.vpDistToLVN_ATR));
+            shapTilt = MathMin(shapTilt, VPGetSHAPTilt(m_symbol, setupName, "vpMigrationScore",  m_state.vpMigrationScore));
+            shapTilt = MathMin(shapTilt, VPGetSHAPTilt(m_symbol, setupName, "vpThinnessRatio",   m_state.vpThinnessRatio));
+            shapTilt = MathMin(shapTilt, VPGetSHAPTilt(m_symbol, setupName, "vpDevPOCDir",       m_state.vpDevPOCDirection));
+            shapTilt = MathMin(shapTilt, VPGetSHAPTilt(m_symbol, setupName, "auctTradeQuality",  m_state.auctTradeQuality));
+            shapTilt = MathMin(shapTilt, VPGetSHAPTilt(m_symbol, setupName, "auctBalance",       m_state.auctBalanceScore));
+            shapTilt = MathMin(shapTilt, VPGetSHAPTilt(m_symbol, setupName, "auctRegimeConf",    m_state.auctRegimeConfidence));
+            shapTilt = MathMin(shapTilt, VPGetSHAPTilt(m_symbol, setupName, "auctContinuation",  m_state.auctContinuationScore));
+            shapTilt = MathMin(shapTilt, VPGetSHAPTilt(m_symbol, setupName, "auctHVNStrength",   m_state.auctHVNClusterStrength));
+            shapTilt = MathMin(shapTilt, VPGetSHAPTilt(m_symbol, setupName, "auctExpReward",     m_state.auctExpectedReward));
+            shapTilt = MathMin(shapTilt, VPGetSHAPTilt(m_symbol, setupName, "msCompression",     m_state.microstructure.compressionScore));
+            shapTilt = MathMin(shapTilt, VPGetSHAPTilt(m_symbol, setupName, "ofFlowIntensity",   m_state.flow.flowIntensityScore));
+            shapTilt = MathMin(shapTilt, VPGetSHAPTilt(m_symbol, setupName, "liqContext",        m_state.liquidity.sweepScore));
+            shapTilt = MathMin(shapTilt, VPGetSHAPTilt(m_symbol, setupName, "smZoneQuality",     m_state.smartMoney.zoneQualityScore));
+            shapTilt = MathMin(shapTilt, VPGetSHAPTilt(m_symbol, setupName, "spreadToATR",       spreadToATR5b));
+            // Apply SHAP tilt to winProbability (informational + research tracking)
+            m_state.winProbability *= shapTilt;
+         }
+
+         // 6. SL risk multiplier (Phase 05) — reduce lot, don't block
+         if (m_state.primarySetup.isValid)
+         {
+            double spreadToATR6 = (m_state.marketData.atrProxy > 0)
+                                   ? m_state.marketData.spreadPoints / m_state.marketData.atrProxy : 0.0;
             double slMult = 1.0;
             slMult = MathMin(slMult, VPGetSLRiskMultiplier(m_symbol, setupName, "auctFailure", m_state.auctFailureScore));
             slMult = MathMin(slMult, VPGetSLRiskMultiplier(m_symbol, setupName, "auctReversalRisk", m_state.auctReversalRiskScore));
-            slMult = MathMin(slMult, VPGetSLRiskMultiplier(m_symbol, setupName, "spreadToATR",
-                     m_state.marketData.atrProxy > 0 ? m_state.marketData.spreadPoints / m_state.marketData.atrProxy : 0));
+            slMult = MathMin(slMult, VPGetSLRiskMultiplier(m_symbol, setupName, "spreadToATR", spreadToATR6));
             m_state.edgeGuardMultiplier = slMult; // applied to lot size in ExecuteSetup
+         }
+
+         // 9. Bad-entry filter (L10 canary: sl_count >= 2 across 3 trailing styles)
+         // Uses file-scope vote counter: reset → vote each feature → check result.
+         if (m_state.primarySetup.isValid)
+         {
+            double spreadToATR9 = (m_state.marketData.atrProxy > 0)
+                                   ? m_state.marketData.spreadPoints / m_state.marketData.atrProxy : 0.0;
+            // Step 1: reset vote counter
+            VPBadEntryVote("__reset__", m_symbol, setupName, "", 0);
+            // Step 2: feed each feature
+            VPBadEntryVote("__vote__", m_symbol, setupName, "vpPOC",              m_state.vpPOC);
+            VPBadEntryVote("__vote__", m_symbol, setupName, "vpVAH",              m_state.vpVAH);
+            VPBadEntryVote("__vote__", m_symbol, setupName, "vpVAL",              m_state.vpVAL);
+            VPBadEntryVote("__vote__", m_symbol, setupName, "vpInsideVA",         m_state.vpInsideVA ? 1.0 : 0.0);
+            VPBadEntryVote("__vote__", m_symbol, setupName, "vpDistToHVN",        m_state.vpDistToHVN_ATR);
+            VPBadEntryVote("__vote__", m_symbol, setupName, "vpDistToLVN",        m_state.vpDistToLVN_ATR);
+            VPBadEntryVote("__vote__", m_symbol, setupName, "vpPriceVsPOC",       m_state.vpPriceVsPOC);
+            VPBadEntryVote("__vote__", m_symbol, setupName, "vpThinnessRatio",    m_state.vpThinnessRatio);
+            VPBadEntryVote("__vote__", m_symbol, setupName, "vpMigrationScore",   m_state.vpMigrationScore);
+            VPBadEntryVote("__vote__", m_symbol, setupName, "vpMigrationConf",    m_state.vpMigrationConfidence);
+            VPBadEntryVote("__vote__", m_symbol, setupName, "vpDevPOCDir",        m_state.vpDevPOCDirection);
+            VPBadEntryVote("__vote__", m_symbol, setupName, "vpDevPOCSlope",      m_state.vpDevPOCSlope);
+            VPBadEntryVote("__vote__", m_symbol, setupName, "vpDailyPOC",         m_state.vpDailyPOC);
+            VPBadEntryVote("__vote__", m_symbol, setupName, "vpDistCompPOC",      m_state.vpDistToCompositePOC_ATR);
+            VPBadEntryVote("__vote__", m_symbol, setupName, "vpCompPOC",          m_state.vpCompositePOC);
+            VPBadEntryVote("__vote__", m_symbol, setupName, "vpCompVAH",          m_state.vpCompositeVAH);
+            VPBadEntryVote("__vote__", m_symbol, setupName, "vpCompVAL",          m_state.vpCompositeVAL);
+            VPBadEntryVote("__vote__", m_symbol, setupName, "vpCompInsideVA",     m_state.vpCompositeInsideVA ? 1.0 : 0.0);
+            VPBadEntryVote("__vote__", m_symbol, setupName, "vpLTTransitionScore",m_state.vpLTTransitionScore);
+            VPBadEntryVote("__vote__", m_symbol, setupName, "vpLTBalanceStability",m_state.vpLTBalanceStability);
+            VPBadEntryVote("__vote__", m_symbol, setupName, "vpLTTrendExhaustion",m_state.vpLTTrendExhaustion);
+            VPBadEntryVote("__vote__", m_symbol, setupName, "vpLTPOCVelocity",    m_state.vpLTPOCVelocity);
+            VPBadEntryVote("__vote__", m_symbol, setupName, "auctAcceptance",     m_state.auctAcceptanceScore);
+            VPBadEntryVote("__vote__", m_symbol, setupName, "auctBalance",        m_state.auctBalanceScore);
+            VPBadEntryVote("__vote__", m_symbol, setupName, "auctRegimeConf",     m_state.auctRegimeConfidence);
+            VPBadEntryVote("__vote__", m_symbol, setupName, "auctTradeQuality",   m_state.auctTradeQuality);
+            VPBadEntryVote("__vote__", m_symbol, setupName, "auctTradeGrade",     (double)m_state.auctTradeGrade);
+            VPBadEntryVote("__vote__", m_symbol, setupName, "auctExpReward",      m_state.auctExpectedReward);
+            VPBadEntryVote("__vote__", m_symbol, setupName, "auctExpMoveATR",     m_state.auctExpectedMoveATR);
+            VPBadEntryVote("__vote__", m_symbol, setupName, "auctTargetProb",     m_state.auctTargetProbability);
+            VPBadEntryVote("__vote__", m_symbol, setupName, "auctExhaustion",     m_state.auctExhaustionScore);
+            VPBadEntryVote("__vote__", m_symbol, setupName, "auctContinuation",   m_state.auctContinuationScore);
+            VPBadEntryVote("__vote__", m_symbol, setupName, "auctReversalRisk",   m_state.auctReversalRiskScore);
+            VPBadEntryVote("__vote__", m_symbol, setupName, "auctHVNStrength",    m_state.auctHVNClusterStrength);
+            VPBadEntryVote("__vote__", m_symbol, setupName, "msCompression",      m_state.microstructure.compressionScore);
+            VPBadEntryVote("__vote__", m_symbol, setupName, "ofFlowIntensity",    m_state.flow.flowIntensityScore);
+            VPBadEntryVote("__vote__", m_symbol, setupName, "liqContext",         m_state.liquidity.sweepScore);
+            VPBadEntryVote("__vote__", m_symbol, setupName, "smZoneQuality",      m_state.smartMoney.zoneQualityScore);
+            VPBadEntryVote("__vote__", m_symbol, setupName, "atrProxy",           m_state.marketData.atrProxy);
+            VPBadEntryVote("__vote__", m_symbol, setupName, "spreadToATR",        spreadToATR9);
+            // Step 3: check accumulated result
+            if (VPBadEntryVote("__check__", m_symbol, setupName, "", 0))
+            {
+               m_state.primarySetup.isValid = false;
+               m_state.statusMessage = "edgeguard_bad_entry";
+            }
          }
       }
 
       // Layer 5: Execute if triggered, then log funnel with ticket
       if (m_state.primarySetup.isValid)
       {
-         ulong openedTicket = ExecuteSetup();
-         // Log funnel WITH ticket (0 = execution failed but still log the trigger)
-         m_funnelLogger.LogSetup(m_state, openedTicket);
+         // One signal id shared by every position fired from this signal. It links
+         // the single funnel row to its (up to 3) trade rows in the research join.
+         string signalId = MakeSignalId(m_state.primarySetup.setupType);
+
+         if (m_config.presetMode == RUN_MODE_DATACOLLECT)
+         {
+            // Fan out one position per trailing style (-1/0/1) on the SAME signal
+            // so the research pipeline can attribute exit behaviour to trailing.
+            int styles[3] = { (int)TRAIL_STYLE_DISABLED,
+                              (int)TRAIL_STYLE_CONSERVATIVE,
+                              (int)TRAIL_STYLE_EXPANSION };
+            for (int s = 0; s < 3; s++)
+            {
+               ulong t = ExecuteSetup(styles[s], signalId);
+               // One funnel row per fired position, tagged with its trailing style
+               // (0 ticket = execution failed but still log the attempt).
+               m_funnelLogger.LogSetup(m_state, t, styles[s], signalId);
+            }
+         }
+         else
+         {
+            ulong openedTicket = ExecuteSetup(m_config.trailingStyle, signalId);
+            // Log funnel WITH ticket (0 = execution failed but still log the trigger)
+            m_funnelLogger.LogSetup(m_state, openedTicket, m_config.trailingStyle, signalId);
+         }
       }
 
       // Cache the setup/decision for the dashboard (shown until the next setup)
@@ -772,6 +1113,8 @@ public:
          if (m_positions[i].ticket == ticket)
          {
             rec.setupType = m_positions[i].setupType;
+            rec.signalId = m_positions[i].signalId;
+            rec.trailingStyle = m_positions[i].trailingStyle;
             rec.isBuy = m_positions[i].isBuy;
             rec.entryPrice = m_positions[i].entryPrice;
             rec.entryTime = m_positions[i].entryTime;
@@ -816,6 +1159,19 @@ public:
             rec.archetype = m_positions[i].archetype;
             rec.profilerSamples = m_positions[i].profilerSamples;
 
+            // MAE/MFE: convert tracked extreme prices to ATR-normalised values
+            // atrAtEntry = atrProxy in POINTS → atrInPrice = atrProxy * pointSize
+            double atrE = m_positions[i].atrAtEntry;
+            double pt   = m_state.marketData.pointSize;
+            if (pt <= 0) pt = SymbolInfoDouble(m_symbol, SYMBOL_POINT);
+            double atrInPrice = atrE * pt;   // ATR in price units
+            if (atrInPrice > 0 && rec.entryPrice > 0) {
+               double mae_raw = MathAbs(m_positions[i].worstPrice - rec.entryPrice);
+               double mfe_raw = MathAbs(m_positions[i].bestPrice  - rec.entryPrice);
+               rec.maeATR = mae_raw / atrInPrice;
+               rec.mfeATR = mfe_raw / atrInPrice;
+            }
+
             // Remove from tracking
             m_positions[i] = m_positions[m_posCount - 1];
             m_posCount--;
@@ -828,6 +1184,8 @@ public:
       if (!found)
       {
          rec.setupType = SETUP_NONE;
+         rec.signalId = "";      // unknown — position was not tracked in RAM
+         rec.trailingStyle = 99; // 99 = unknown (position not tracked in RAM)
          if (HistorySelectByPosition(ticket))
          {
             for (int d = 0; d < HistoryDealsTotal(); d++)
@@ -837,6 +1195,10 @@ public:
                if ((ENUM_DEAL_ENTRY)HistoryDealGetInteger(deal, DEAL_ENTRY) == DEAL_ENTRY_IN)
                {
                   string cmt = HistoryDealGetString(deal, DEAL_COMMENT);
+                  // Recover trailing style encoded as _T<style> (see ExecuteSetup)
+                  int tp = StringFind(cmt, "_T");
+                  if (tp >= 0)
+                     rec.trailingStyle = (int)StringToInteger(StringSubstr(cmt, tp + 2));
                   if (StringFind(cmt, "BREAKOUT_RETEST") >= 0) rec.setupType = SETUP_BREAKOUT_RETEST;
                   else if (StringFind(cmt, "NAKED_POC") >= 0) rec.setupType = SETUP_NAKED_POC;
                   else if (StringFind(cmt, "ANCHORED_PULLBACK") >= 0) rec.setupType = SETUP_ANCHORED_PULLBACK;

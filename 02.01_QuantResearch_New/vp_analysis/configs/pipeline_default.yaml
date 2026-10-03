@@ -1,0 +1,71 @@
+# Pipeline configuration — passes through to layer configs.
+# All keys optional; missing keys use layer defaults.
+
+hygiene:
+  halt_on_entry_inconsistency: true
+  halt_on_mae_mfe_violation: true
+  halt_on_time_integrity: true
+
+feature_availability:
+  min_std: 1.0e-9
+  max_na_frac: 0.30
+
+eda:
+  n_bins: 10
+  monotone_rho_threshold: 0.60
+  correlation_threshold: 0.70
+  n_temporal_blocks: 5
+
+hard_gate:
+  outer_folds: 5
+  inner_folds: 3
+  gap_ratio: 0.10
+  min_effect_size: 0.05
+  fold_consistency_threshold: 0.60
+  ttest_alpha: 0.05
+  perm_iterations: 100
+  seed: 42
+
+soft_gate:
+  perm_iterations: 500
+  perm_alpha: 0.10
+  min_total_samples: 60
+  min_half_samples: 20
+  seed: 42
+
+multiple_testing:
+  conservative_fdr: true
+  require_ci_low_positive: true
+
+optimization:
+  use_sl_tp_optimization: true
+  use_sizing: true
+  kelly_fraction: 0.25
+  min_dev_trades: 30
+  n_folds: 4
+  min_fold_agree: 0.70
+  max_pval: 0.10
+
+holdout:
+  min_gated_trades: 20
+  ev_degradation_factor: 0.50
+  pf_min: 1.00
+  wr_degradation_factor: 0.80
+
+attribution:
+  min_trades: 20
+  min_style_trades: 15
+
+bad_entry:
+  min_extreme_samples: 20
+  binom_alpha: 0.05
+  min_votes: 2
+
+run_soft_gates: true
+run_attribution: true
+run_bad_entry: true
+run_dev_optimization: true
+
+halt_on_L0_fail: true
+halt_on_insufficient_features: true
+min_available_features: 3

@@ -1,0 +1,13 @@
+feature,win_top3_freq,lose_top3_freq,total_top3_freq,win_bias
+vpDistNakedPOC_ATR,15,9,24,0.6249999999739584
+vpBestHVNScore,14,6,20,0.699999999965
+auctTargetType,10,8,18,0.5555555555246914
+liqSessionLiq,8,3,11,0.7272727272066115
+msSpreadScore,3,8,11,0.2727272727024793
+RR,5,5,10,0.49999999995
+vpCompVAL,1,7,8,0.124999999984375
+ofParticipation,1,4,5,0.19999999996
+smFVG,0,5,5,0.0
+auctExpReward,0,4,4,0.0
+auctTradeQuality,2,1,3,0.6666666664444444
+ofAbsorption,1,0,1,0.9999999989999999

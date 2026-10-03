@@ -1,0 +1,17 @@
+feature,win_top3_freq,lose_top3_freq,total_top3_freq,win_bias
+auctDistLVN,11,5,16,0.6874999999570313
+ofFlowIntensity,3,12,15,0.19999999998666668
+vpCompVAH,6,9,15,0.39999999997333335
+ofParticipation,6,7,13,0.4615384615029586
+liqPremDisc,8,3,11,0.7272727272066115
+auctShapeConf,9,2,11,0.8181818181074381
+auctContinuation,0,8,8,0.0
+vpCompVAL,6,1,7,0.8571428570204082
+liqContext,1,4,5,0.19999999996
+vpVAOverlapRatio,4,1,5,0.79999999984
+entryVpThinnessRatio,1,2,3,0.3333333332222222
+msCompression,2,1,3,0.6666666664444444
+entryVpPOC,2,1,3,0.6666666664444444
+vpDailyPOC,1,1,2,0.49999999975
+liqDensity,0,2,2,0.0
+vpLTTrendDuration,0,1,1,0.0

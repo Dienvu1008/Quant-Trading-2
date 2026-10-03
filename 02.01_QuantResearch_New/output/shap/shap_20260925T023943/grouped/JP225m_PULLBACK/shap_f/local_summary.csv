@@ -1,0 +1,10 @@
+feature,win_top3_freq,lose_top3_freq,total_top3_freq,win_bias
+smFVG,19,19,38,0.49999999998684214
+vpVAOverlapRatio,19,16,35,0.5428571428416327
+liqStopCluster,11,9,20,0.5499999999725
+vpCompVAL,3,5,8,0.374999999953125
+msSpreadScore,1,6,7,0.1428571428367347
+profilerBalMean,3,2,5,0.59999999988
+vpLTPOC10d,4,1,5,0.79999999984
+auctExhaustion,0,1,1,0.0
+vpLTPOCVelocity,0,1,1,0.0

@@ -59,7 +59,8 @@ def _sync_kind(kind: str, time_col: str, dedup_fn) -> int:
     for f in sorted(src_files):
         sym = Path(f).stem.replace(f"{kind}_", "")
         try:
-            raw = pd.read_csv(f, encoding="utf-16")
+            raw = pd.read_csv(f, encoding="utf-16", low_memory=False,
+                              dtype={"signalId": str})
         except Exception as e:
             print(f"  [ERR] sync {Path(f).name}: {e}")
             continue
@@ -78,7 +79,8 @@ def _sync_kind(kind: str, time_col: str, dedup_fn) -> int:
             out = DATA_DIR / f"{kind}_{msym}_{month}.csv"
             if out.exists():
                 try:
-                    existing = pd.read_csv(out, encoding="utf-8")
+                    existing = pd.read_csv(out, encoding="utf-8", low_memory=False,
+                                          dtype={"signalId": str})
                 except Exception:
                     existing = pd.DataFrame()
             else:

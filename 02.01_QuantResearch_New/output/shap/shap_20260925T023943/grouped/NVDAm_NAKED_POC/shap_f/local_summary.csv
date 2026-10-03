@@ -1,0 +1,11 @@
+feature,win_top3_freq,lose_top3_freq,total_top3_freq,win_bias
+spreadPoints,20,15,35,0.5714285714122449
+spreadToATR,16,11,27,0.5925925925706447
+avgSpread,3,12,15,0.19999999998666668
+liqEqualHL,7,8,15,0.46666666663555556
+vpBestHVN,2,5,7,0.2857142856734694
+auctTargetPrice,7,0,7,0.9999999998571428
+atrProxy,1,4,5,0.19999999996
+ofContext,0,4,4,0.0
+entryLTNearestZoneStrength,4,0,4,0.99999999975
+msCompression,0,1,1,0.0

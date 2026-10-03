@@ -1,0 +1,10 @@
+feature,win_top3_freq,lose_top3_freq,total_top3_freq,win_bias
+spreadPoints,20,20,40,0.49999999998750005
+avgSpread,20,19,39,0.5128205128073636
+auctMajorHVN,3,9,12,0.24999999997916666
+vpLTPOCAcceleration,7,2,9,0.777777777691358
+spreadToATR,1,5,6,0.16666666663888888
+entryVpDistHVN,1,4,5,0.19999999996
+entryProfilerSamples,4,0,4,0.99999999975
+vpLTAcceptanceAtPrice,3,0,3,0.9999999996666666
+msSpreadScore,1,1,2,0.49999999975

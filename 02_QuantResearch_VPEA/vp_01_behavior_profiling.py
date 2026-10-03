@@ -42,7 +42,7 @@ MAX_RECORDS = 500_000
 STABILITY_CV_THRESHOLD = 0.4  # CV > 40% = unstable
 
 
-def run(funnel_df=None, trade_df=None):
+def run(funnel_df=None, trade_df=None, production_style=1):
     t0 = time.time()
     print("\n" + "=" * 60)
     print("VP PHASE 01 — BEHAVIOR PROFILING (ROBUST v2)")
